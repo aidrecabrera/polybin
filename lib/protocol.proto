@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message BIN_STATUS {
+    float SENSOR_1 = 1;
+    float SENSOR_2 = 2;
+    float SENSOR_3 = 3;
+    float SENSOR_4 = 4;
+}
