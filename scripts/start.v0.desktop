@@ -1,0 +1,8 @@
+Version=1.0
+Type=Application
+Name=TRSHCN
+Exec=/home/admin/run_autotrash.sh
+Comment=Trashscan
+X-Keywords=pyth;waste;trashscan
+Terminal=true
+X-KeepTerminal=true
