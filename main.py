@@ -1,26 +1,14 @@
-import os
-import sys
 import time
 import threading
 import cv2
-import serial
-import RPi.GPIO as GPIO
 from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
+
+from config import SERIAL_PORT, GSM_PORT, SERVO_PIN_1, SERVO_PIN_2, SENSOR_THRESHOLD, NOTIFICATION_INTERVAL, COOLDOWN_PERIOD
 from lib.data import Data
 from lib.sms import Sms
-
-# add parent directory to sys.path for imports
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-SERVO_PIN_1 = 32
-SERVO_PIN_2 = 35
-COOLDOWN_PERIOD = 2
-NOTIFICATION_INTERVAL = 10
-SENSOR_THRESHOLD = 13
-SERIAL_PORT = '/dev/ttyACM0'
-GSM_PORT = '/dev/ttyUSB0'
+from lib.hardware import Servo
 
 app = Flask(__name__)
 CORS(app)
@@ -28,39 +16,17 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 class PolybinSystem:
     def __init__(self):
-        # initialize variables and lock
+        # initialize variables
         self.last_action_time = time.time()
         self.last_notification_time = time.time()
-        self.servo_lock = threading.Lock()
         self.camera = cv2.VideoCapture(0)
-        self.bin_system = Sms(port=GSM_PORT)
-        self.latest_data = {f"SENSOR_{i}": 40 for i in range(1, 5)}
+        self.sensor_data = Data(SERIAL_PORT)
+        self.sms_notifier = Sms(GSM_PORT)
+        self.servo_controller = Servo(SERVO_PIN_1, SERVO_PIN_2)
         self.notification_sent = {bin_type: False for bin_type in ["bio", "non", "rec", "haz"]}
 
-        self._setup_gpio()
-
-    def _setup_gpio(self):
-        # configure GPIO settings
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setwarnings(False)
-        for pin in (SERVO_PIN_1, SERVO_PIN_2):
-            GPIO.setup(pin, GPIO.OUT)
-
-    def set_servo_angle(self, servo_pin, angle):
-        # set servo to the specified angle
-        with self.servo_lock:
-            pwm = GPIO.PWM(servo_pin, 50)
-            pwm.start(0)
-            duty = angle / 18 + 2
-            GPIO.output(servo_pin, GPIO.HIGH)
-            pwm.ChangeDutyCycle(duty)
-            time.sleep(1)
-            GPIO.output(servo_pin, GPIO.LOW)
-            pwm.ChangeDutyCycle(0)
-            pwm.stop()
-
     def dispose_waste(self, waste_type):
-        # define actions for different waste types
+        """handle waste disposal for different types"""
         actions = {
             'BIO': (0, 0, 90, "Biodegradable"),
             'NON': (90, 0, 90, "Non-Biodegradable"),
@@ -69,47 +35,37 @@ class PolybinSystem:
         }
         
         if waste_type in actions:
-            # execute the action for the waste type
+            # perform actions for the specified waste type
             angle1, angle2, final_angle, description = actions[waste_type]
             print(f"disposing {description}")
-            self.set_servo_angle(SERVO_PIN_1, angle1)
-            self.set_servo_angle(SERVO_PIN_2, angle2)
+            self.servo_controller.set_angle(SERVO_PIN_1, angle1)
+            self.servo_controller.set_angle(SERVO_PIN_2, angle2)
             time.sleep(1)
-            self.set_servo_angle(SERVO_PIN_2, final_angle)
+            self.servo_controller.set_angle(SERVO_PIN_2, final_angle)
             return description
         return "Unknown"
 
     def update_sensor_data(self):
-        # update sensor data from serial
-        sensor = Data()
-        try:
-            if sensor.check_transmission(serial_port=SERIAL_PORT):
-                sensor.get_bin_data()
-                self.latest_data = {f"SENSOR_{i}": getattr(sensor, f"sensor_{i}") for i in range(1, 5)}
-                socketio.emit('sensor_update', self.latest_data)
-           
-                current_time = time.time()
-                if current_time - self.last_notification_time >= NOTIFICATION_INTERVAL:
-                    self.last_notification_time = current_time 
-                    for bin_type, sensor_value in zip(["bio", "non", "rec", "haz"], self.latest_data.values()):
-                        self.check_and_notify(bin_type, sensor_value)
-        except serial.SerialException:
-            print("serial connection issue")
-        except Exception as e:
-            print(f"error: {e}")
-        finally:
-            socketio.emit('sensor_update', self.latest_data)
+        """update sensor data and send notifications if needed"""
+        if self.sensor_data.update():
+            socketio.emit('sensor_update', self.sensor_data.sensors)
+            
+            current_time = time.time()
+            if current_time - self.last_notification_time >= NOTIFICATION_INTERVAL:
+                self.last_notification_time = current_time 
+                for bin_type, sensor_value in zip(["bio", "non", "rec", "haz"], self.sensor_data.sensors.values()):
+                    self.check_and_notify(bin_type, sensor_value)
 
     def check_and_notify(self, bin_type, sensor_value):
-        # check sensor value and send notification if needed
+        """check sensor value and send notification if needed"""
         if sensor_value <= SENSOR_THRESHOLD and not self.notification_sent[bin_type]:
-            self.bin_system.send_notification(bin_type)
+            self.sms_notifier.send_notification(bin_type)
             self.notification_sent[bin_type] = True 
         elif sensor_value > SENSOR_THRESHOLD:
             self.notification_sent[bin_type] = False
 
     def generate_frames(self):
-        # generate video frames for streaming
+        """generate video frames for streaming"""
         while True:
             success, frame = self.camera.read()
             if not success:
@@ -120,18 +76,32 @@ class PolybinSystem:
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     def cleanup(self):
-        # release resources
+        """release all resources"""
         self.camera.release()
-        GPIO.cleanup()
+        self.servo_controller.cleanup()
 
 polybin = PolybinSystem()
 
 @app.route('/')
 def index():
+    """render the main page"""
     return render_template('index.html')
 
 @app.route('/control', methods=['POST'])
 def control():
+    """
+    handle waste disposal control
+    
+    POST data:
+    {
+        "action": "BIO" | "NON" | "REC" | "HAZ"
+    }
+    
+    Returns:
+    {
+        "status": "Biodegradable" | "Non-Biodegradable" | "Recyclable" | "Dangerous/Hazardous" | "Unknown" | "cooldown in effect"
+    }
+    """
     data = request.get_json()
     action = data.get('action')
     current_time = time.time()
@@ -148,17 +118,31 @@ def control():
 
 @app.route('/sensor_data', methods=['GET'])
 def get_sensor_data():
-    return jsonify(polybin.latest_data)
+    """
+    return the latest sensor data
+    
+    Returns:
+    {
+        "SENSOR_1": float,
+        "SENSOR_2": float,
+        "SENSOR_3": float,
+        "SENSOR_4": float
+    }
+    """
+    return jsonify(polybin.sensor_data.sensors)
 
 @app.route('/video_feed')
 def video_feed():
+    """stream video feed"""
     return Response(polybin.generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @socketio.on('connect')
 def handle_connect():
-    emit('sensor_update', polybin.latest_data)
+    """handle new socket connection"""
+    emit('sensor_update', polybin.sensor_data.sensors)
 
 def sensor_data_updater():
+    """continuously update sensor data"""
     while True:
         polybin.update_sensor_data()
         time.sleep(2)

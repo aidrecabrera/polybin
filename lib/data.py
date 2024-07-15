@@ -1,35 +1,30 @@
-import os
-import sys
 import serial
 import serial.tools.list_ports
-from lib import trashscan_protocol_pb2 as protocol
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from proto import trashscan_protocol_pb2 as protocol
 
 class Data:
-    def __init__(self):
-        # initializing sensor values
-        self.sensor_1 = 40
-        self.sensor_2 = 40
-        self.sensor_3 = 40
-        self.sensor_4 = 40
-        
-    def get_bin_data(self):
-        # establishing serial connection
-        ser = serial.Serial('/dev/ttyACM0', 19200)
-        # reading encoded message from serial
-        encoded_message = ser.read(20)
-        # parsing encoded message using protocol buffer
-        bin_status = protocol.BIN_STATUS()
-        bin_status.ParseFromString(encoded_message)
-        # updating sensor values
-        self.sensor_1 = bin_status.SENSOR_1
-        self.sensor_2 = bin_status.SENSOR_2
-        self.sensor_3 = bin_status.SENSOR_3
-        self.sensor_4 = bin_status.SENSOR_4
+    def __init__(self, serial_port):
+        self.serial_port = serial_port
+        self.sensors = {f"SENSOR_{i}": 40 for i in range(1, 5)}
 
-    def check_transmission(self, serial_port='/dev/ttyACM0'):
-        # retrieving list of available ports
-        ports = [port.device for port in serial.tools.list_ports.comports()]
-        # checking if the specified serial port is available
-        return serial_port in ports
+    def update(self):
+        """update sensor data from serial connection"""
+        if not self.check_transmission():
+            return False
+
+        try:
+            with serial.Serial(self.serial_port, 19200, timeout=1) as ser:
+                encoded_message = ser.read(20)
+                bin_status = protocol.BIN_STATUS()
+                bin_status.ParseFromString(encoded_message)
+                
+                for i in range(1, 5):
+                    self.sensors[f"SENSOR_{i}"] = getattr(bin_status, f"SENSOR_{i}")
+            return True
+        except serial.SerialException as e:
+            print(f"serial error: {e}")
+            return False
+
+    def check_transmission(self):
+        """check if the specified serial port is available"""
+        return self.serial_port in [port.device for port in serial.tools.list_ports.comports()]
