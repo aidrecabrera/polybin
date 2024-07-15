@@ -2,7 +2,7 @@ import os
 import sys
 import serial
 import serial.tools.list_ports
-from lib import protocol
+from lib import trashscan_protocol_pb2 as protocol
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
