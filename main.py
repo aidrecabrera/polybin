@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-polybin = Polybin()
+polybin = Polybin(socketio)
 
 @app.route('/')
 def index():
