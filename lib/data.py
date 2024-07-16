@@ -21,6 +21,8 @@ class Data:
                     
                     for i in range(1, 5):
                         self.sensors[f"SENSOR_{i}"] = getattr(bin_status, f"SENSOR_{i}")
+                        
+                    print(f"Sensor data: {self.sensors}")
                 else:
                     print("No data received.")
             return True
