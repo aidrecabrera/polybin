@@ -1,8 +1,8 @@
 import time
-from servo_controller import ServoController
+from lib.dispose import Dispose
 
 def main():
-    servo_controller = ServoController(servo_pin_1=32, servo_pin_2=35)
+    servo_controller = Dispose(servo_pin_1=32, servo_pin_2=35)
     try:
         while True:
             print("\nSelect the type of waste to dispose:")

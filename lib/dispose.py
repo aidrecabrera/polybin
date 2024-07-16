@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import threading
 
-class ServoController:
+class Dispose:
     def __init__(self, servo_pin_1, servo_pin_2, cooldown_period=2):
         self.SERVO_PIN_1 = servo_pin_1
         self.SERVO_PIN_2 = servo_pin_2
