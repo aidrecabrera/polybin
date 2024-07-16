@@ -6,13 +6,12 @@ from flask_socketio import SocketIO, emit
 import serial
 from config import (
     FLASK_DEBUG, FLASK_HOST, FLASK_PORT, NOTIFICATION_INTERVAL,
-    SENSOR_UPDATE_INTERVAL, SENSOR_THRESHOLD
+    SENSOR_SERIAL_PORT, SENSOR_UPDATE_INTERVAL, SENSOR_THRESHOLD
 )
 from lib.data import Data
 from lib.sms import Sms
 
 sms = Sms()
-sensor = Data("/dev/ttyACM0")
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -32,6 +31,7 @@ notification_sent = {
 }
 
 def sensor_data_refresh():
+    sensor = Data(SENSOR_SERIAL_PORT)
     while True:
         global latest_data, sms, last_notification_time
         try:
