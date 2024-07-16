@@ -36,6 +36,7 @@ def sensor_data_refresh():
         global latest_data, sms, last_notification_time
         try:
             if sensor.check_transmission():
+                print(sensor.sensor_1, sensor.sensor_2, sensor.sensor_3, sensor.sensor_4)
                 latest_data = {
                     "SENSOR_1": sensor.sensor_1,
                     "SENSOR_2": sensor.sensor_2,
