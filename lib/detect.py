@@ -11,7 +11,7 @@ class Detect:
         self.img_size = img_size
         self.model = None
         self.class_names = ['Bio-degradable', 'Hazardous', 'Non-biodegradable', 'Recyclable']
-        self.device = torch.device('cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.transform = transforms.Compose([
             transforms.Resize((self.img_size, self.img_size)),
             transforms.ToTensor(),
@@ -21,8 +21,6 @@ class Detect:
         self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=self.model_path, force_reload=True)
         self.model.to(self.device)
         self.model.eval()
-        
-        self.model = torch.jit.script(self.model)
 
     def preprocess_image(self, image: Union[np.ndarray, str, Image.Image]) -> torch.Tensor:
         if isinstance(image, np.ndarray):
