@@ -1,25 +1,38 @@
 import serial
 import time
-from config import SERIAL_PORT, SERIAL_BAUD_RATE
 
-class Sms:
-    def __init__(self, port=SERIAL_PORT, baud_rate=SERIAL_BAUD_RATE):
+class BinNotificationSystem:
+    def __init__(self, port="/dev/ttyUSB0", baud_rate=9600):
         self.serial_connection = serial.Serial(port, baud_rate, timeout=1)
         time.sleep(2)
-
     def send_notification(self, bin_type):
         commands = {
-            'SENSOR_1': 'a',
-            'SENSOR_2': 'b',
-            'SENSOR_3': 'c',
-            'SENSOR_4': 'd'
+            'bio': 'a',
+            'non': 'b',
+            'rec': 'c',
+            'haz': 'd'
         }
         if bin_type in commands:
             print(f"Sending notification for {bin_type} bin.")
             self.serial_connection.write(commands[bin_type].encode())
         else:
             print("Invalid or Error")
-
+            
     def close(self):
         self.serial_connection.close()
         print("COMM Closed!")
+        
+if __name__ == "__main__":
+    port = 'COM6'
+    bin_system = BinNotificationSystem(port)
+    try:
+        bin_system.send_notification('bio')
+        time.sleep(5)
+        bin_system.send_notification('non')
+        time.sleep(5)
+        bin_system.send_notification('rec')
+        time.sleep(5)
+        bin_system.send_notification('haz')
+        time.sleep(5)
+    finally:
+        bin_system.close()
