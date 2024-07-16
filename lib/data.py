@@ -31,10 +31,3 @@ class Data:
     def check_transmission(self):
         """check if the specified serial port is available"""
         return self.serial_port in [port.device for port in serial.tools.list_ports.comports()]
-
-if __name__ == "__main__":
-    data = Data("/dev/ttyUSB0")
-    while True:
-        data.retrieve_data()
-        for i in range(1, 5):
-            print(f"sensor_{i}: {getattr(data, f'sensor_{i}')}")
