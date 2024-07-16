@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from lib.data import Data
+from data import Data
 from proto import trashscan_protocol_pb2
 
 @pytest.fixture
