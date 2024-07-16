@@ -20,9 +20,17 @@ class Data:
                 encoded_message = ser.read(20)
                 bin_status = protocol.BIN_STATUS()
                 bin_status.ParseFromString(encoded_message)
-                for i in range(1, 5):
-                    setattr(self, f"sensor_{i}", getattr(bin_status, f"sensor_{i}"))
-                    print(f"sensor_{i}: {getattr(self, f'sensor_{i}')}")
+                
+                self.sensor_1 = bin_status.SENSOR_1
+                self.sensor_2 = bin_status.SENSOR_2
+                self.sensor_3 = bin_status.SENSOR_3
+                self.sensor_4 = bin_status.SENSOR_4
+            
+            print(f"Sensor 1: {self.sensor_1}")
+            print(f"Sensor 2: {self.sensor_2}")
+            print(f"Sensor 3: {self.sensor_3}")
+            print(f"Sensor 4: {self.sensor_4}")
+            
             return True
         except serial.SerialException as e:
             print(f"serial error: {e}")
