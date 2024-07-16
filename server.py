@@ -13,7 +13,7 @@ from lib.data import Data
 from lib.sms import Sms
 
 sms = Sms()
-sensor = Data()
+sensor = Data("/dev/ttyACM0")
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
