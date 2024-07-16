@@ -1,25 +1,25 @@
 import serial
 import time
+from config import SERIAL_PORT, SERIAL_BAUD_RATE
 
 class Sms:
-    def __init__(self, port, baud_rate=9600):
-        self.port = port
-        self.baud_rate = baud_rate
+    def __init__(self, port=SERIAL_PORT, baud_rate=SERIAL_BAUD_RATE):
+        self.serial_connection = serial.Serial(port, baud_rate, timeout=1)
+        time.sleep(2)
 
     def send_notification(self, bin_type):
-        """send notification for the specified bin type"""
-        commands = {'bio': 'a', 'non': 'b', 'rec': 'c', 'haz': 'd'}
-        
-        if bin_type not in commands:
-            print(f"invalid bin type: {bin_type}")
-            return False
+        commands = {
+            'bio': 'a',
+            'non': 'b',
+            'rec': 'c',
+            'haz': 'd'
+        }
+        if bin_type in commands:
+            print(f"Sending notification for {bin_type} bin.")
+            self.serial_connection.write(commands[bin_type].encode())
+        else:
+            print("Invalid or Error")
 
-        try:
-            with serial.Serial(self.port, self.baud_rate, timeout=1) as ser:
-                time.sleep(2)  # wait for connection to establish
-                ser.write(commands[bin_type].encode())
-                print(f"notification sent for {bin_type} bin")
-            return True
-        except serial.SerialException as e:
-            print(f"sms error: {e}")
-            return False
+    def close(self):
+        self.serial_connection.close()
+        print("COMM Closed!")
