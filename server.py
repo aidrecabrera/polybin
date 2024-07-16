@@ -82,12 +82,18 @@ class Data:
 
         try:
             with serial.Serial(self.serial_port, 19200, timeout=1) as ser:
+                ser.flush()
+                ser.write(b'R')
+                time.sleep(0.1)
+
                 encoded_message = ser.read(20)
                 if encoded_message:
-                    # Assuming protocol.BIN_STATUS() is not available, we'll simulate it
-                    self.sensors = {f"SENSOR_{i}": int.from_bytes(encoded_message[i*4:(i+1)*4], 'little') for i in range(4)}
+                    for i in range(4):
+                        sensor_value = int.from_bytes(encoded_message[i*4:(i+1)*4], 'little')
+                        self.sensors[f"SENSOR_{i+1}"] = sensor_value
+                    print(f"Updated sensor data: {self.sensors}")
                 else:
-                    print("No data received.")
+                    print("No data received from sensors.")
             return True
         except serial.SerialException as e:
             print(f"Serial error: {e}")
