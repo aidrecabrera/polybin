@@ -5,8 +5,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 import serial
 from config import (
-    FLASK_DEBUG, FLASK_HOST, FLASK_PORT,
-    SENSOR_SERIAL_PORT, NOTIFICATION_INTERVAL,
+    FLASK_DEBUG, FLASK_HOST, FLASK_PORT, NOTIFICATION_INTERVAL,
     SENSOR_UPDATE_INTERVAL, SENSOR_THRESHOLD
 )
 from lib.data import Data
@@ -18,51 +17,43 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-
+last_notification_time = time.time()
 latest_data = {
     "SENSOR_1": 40,
     "SENSOR_2": 40,
     "SENSOR_3": 40,
     "SENSOR_4": 40,
 }
-
 notification_sent = {
-    "bio": False,
-    "non": False,
-    "rec": False,
-    "haz": False
+    "SENSOR_1": False,
+    "SENSOR_2": False,
+    "SENSOR_3": False,
+    "SENSOR_4": False,
 }
-
-last_notification_time = time.time()
 
 def sensor_data_refresh():
     while True:
-        sensor_data_retrieve()
-        time.sleep(SENSOR_UPDATE_INTERVAL)
-
-def sensor_data_retrieve():
-    global latest_data, sms, last_notification_time
-    try:
-        if sensor.check_transmission(serial_port=SENSOR_SERIAL_PORT):
-            latest_data = {
-                "SENSOR_1": sensor.sensors["SENSOR_1"],
-                "SENSOR_2": sensor.sensors["SENSOR_2"],
-                "SENSOR_3": sensor.sensors["SENSOR_3"],
-                "SENSOR_4": sensor.sensors["SENSOR_4"],
-            }
-            print(latest_data)
+        global latest_data, sms, last_notification_time
+        try:
+            if sensor.check_transmission():
+                latest_data = {
+                    "SENSOR_1": sensor.sensor_1,
+                    "SENSOR_2": sensor.sensor_2,
+                    "SENSOR_3": sensor.sensor_3,
+                    "SENSOR_4": sensor.sensor_4,
+                }
+                socketio.emit('sensor_update', latest_data)
+                if time.time() - last_notification_time >= NOTIFICATION_INTERVAL:
+                    last_notification_time = time.time()
+                    for bin_type, sensor_value in latest_data.items():
+                        check_and_notify(bin_type, sensor_value, SENSOR_THRESHOLD)
+        except serial.SerialException:
+            print("Serial connection issue.")
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
             socketio.emit('sensor_update', latest_data)
-
-            if time.time() - last_notification_time >= NOTIFICATION_INTERVAL:
-                last_notification_time = time.time()
-                for bin_type, sensor_value in latest_data.items():
-                    check_and_notify(bin_type, sensor_value, SENSOR_THRESHOLD)
-    except serial.SerialException:
-        print("Serial connection issue.")
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        socketio.emit('sensor_update', latest_data)
+        time.sleep(SENSOR_UPDATE_INTERVAL)
 
 def check_and_notify(bin_type, sensor_value, threshold):
     global notification_sent

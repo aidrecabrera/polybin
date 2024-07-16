@@ -9,10 +9,10 @@ class Sms:
 
     def send_notification(self, bin_type):
         commands = {
-            'bio': 'a',
-            'non': 'b',
-            'rec': 'c',
-            'haz': 'd'
+            'SENSOR_1': 'a',
+            'SENSOR_2': 'b',
+            'SENSOR_3': 'c',
+            'SENSOR_4': 'd'
         }
         if bin_type in commands:
             print(f"Sending notification for {bin_type} bin.")
