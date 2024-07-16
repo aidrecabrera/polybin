@@ -1,6 +1,6 @@
 import time
 import threading
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO # type: ignore
 
 class Servo:
     def __init__(self, pin1, pin2):

@@ -1,7 +1,7 @@
 import time
 import threading
 import cv2
-from flask_socketio import SocketIO
+import socketio
 
 from config import SERIAL_PORT, GSM_PORT, SERVO_PIN_1, SERVO_PIN_2, SENSOR_THRESHOLD, NOTIFICATION_INTERVAL
 
@@ -10,8 +10,9 @@ from lib.sms import Sms
 from lib.hardware import Servo
 from lib.detect import Detect
 
+
 class Polybin:
-    def __init__(self, socketio):
+    def __init__(self):
         self.last_action_time = time.time()
         self.last_notification_time = time.time()
         
@@ -24,13 +25,33 @@ class Polybin:
         self.notification_sent = {bin_type: False for bin_type in ["bio", "non", "rec", "haz"]}
         self.frame = None
         self.frame_lock = threading.Lock()
-        self.detector = Detect(model_path='model/weights/best.pt', img_size=320)
-        self.detector.load_model()
-        self.socketio = socketio
+        self.detector = Detect(
+            api_key="MKTjsmucOSIZyKIaoQU7",
+            model_id="garbage-segregator-ndyo4/5",
+            confidence_threshold=0.287
+        )
+
+    def dispose_waste(self, waste_type):
+        actions = {
+            'Bio-degradable': (0, 0, 90, "Biodegradable"),
+            'Non-biodegradable': (90, 0, 90, "Non-Biodegradable"),
+            'Recyclable': (0, 180, 90, "Recyclable"),
+            'Hazardous': (90, 180, 90, "Dangerous/Hazardous")
+        }
+        
+        if waste_type in actions:
+            angle1, angle2, final_angle, description = actions[waste_type]
+            print(f"Disposing {description}")
+            self.servo_controller.set_angle(SERVO_PIN_1, angle1)
+            self.servo_controller.set_angle(SERVO_PIN_2, angle2)
+            time.sleep(1)
+            self.servo_controller.set_angle(SERVO_PIN_2, final_angle)
+            return description
+        return "Unknown"
 
     def update_sensor_data(self):
         if self.sensor_data.update():
-            self.socketio.emit('sensor_update', self.sensor_data.sensors)
+            socketio.emit('sensor_update', self.sensor_data.sensors)
             
             current_time = time.time()
             if current_time - self.last_notification_time >= NOTIFICATION_INTERVAL:
