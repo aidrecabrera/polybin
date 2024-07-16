@@ -12,11 +12,10 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
-# Configuration
-SERIAL_PORT = "/dev/ttyUSB0"
-GSM_PORT = "/dev/ttyUSB1"
-SERVO_PIN_1 = 11
-SERVO_PIN_2 = 13
+SERIAL_PORT = "/dev/ttyACM0"
+GSM_PORT = "/dev/ttyUSB0"
+SERVO_PIN_1 = 32
+SERVO_PIN_2 = 35
 SENSOR_THRESHOLD = 20
 NOTIFICATION_INTERVAL = 3600
 COOLDOWN_PERIOD = 5
