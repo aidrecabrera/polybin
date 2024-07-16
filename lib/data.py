@@ -1,4 +1,3 @@
-from re import T
 import serial
 import serial.tools.list_ports
 from proto import trashscan_protocol_pb2 as protocol
