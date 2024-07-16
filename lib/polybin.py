@@ -1,7 +1,6 @@
 import time
 import threading
 import cv2
-import socketio
 
 from config import SERIAL_PORT, GSM_PORT, SERVO_PIN_1, SERVO_PIN_2, SENSOR_THRESHOLD, NOTIFICATION_INTERVAL
 
@@ -12,9 +11,10 @@ from lib.detect import Detect
 
 
 class Polybin:
-    def __init__(self):
+    def __init__(self, socketio):
         self.last_action_time = time.time()
         self.last_notification_time = time.time()
+        self.socketio = socketio
         
         self.camera = cv2.VideoCapture(0)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -51,7 +51,7 @@ class Polybin:
 
     def update_sensor_data(self):
         if self.sensor_data.update():
-            socketio.emit('sensor_update', self.sensor_data.sensors)
+            self.socketio.emit('sensor_update', self.sensor_data.sensors)
             
             current_time = time.time()
             if current_time - self.last_notification_time >= NOTIFICATION_INTERVAL:
