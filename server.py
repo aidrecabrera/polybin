@@ -12,11 +12,12 @@ from config import (
 from lib.data import Data
 from lib.sms import Sms
 
+sms = Sms()
+sensor = Data()
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-sms = Sms()
 
 latest_data = {
     "SENSOR_1": 40,
@@ -34,34 +35,28 @@ notification_sent = {
 
 last_notification_time = time.time()
 
-@app.route('/sensor_data', methods=['GET'])
-def get_sensor_data():
-    return jsonify(latest_data)
+def sensor_data_refresh():
+    while True:
+        sensor_data_retrieve()
+        time.sleep(SENSOR_UPDATE_INTERVAL)
 
-@socketio.on('connect')
-def handle_connect():
-    emit('sensor_update', latest_data)
-
-def update_sensor_data():
+def sensor_data_retrieve():
     global latest_data, sms, last_notification_time
-    sensor = Data()
     try:
         if sensor.check_transmission(serial_port=SENSOR_SERIAL_PORT):
-            sensor.get_bin_data(SENSOR_SERIAL_PORT)
             latest_data = {
-                "SENSOR_1": sensor.sensor_1,
-                "SENSOR_2": sensor.sensor_2,
-                "SENSOR_3": sensor.sensor_3,
-                "SENSOR_4": sensor.sensor_4
+                "SENSOR_1": sensor.sensors["SENSOR_1"],
+                "SENSOR_2": sensor.sensors["SENSOR_2"],
+                "SENSOR_3": sensor.sensors["SENSOR_3"],
+                "SENSOR_4": sensor.sensors["SENSOR_4"],
             }
+            print(latest_data)
             socketio.emit('sensor_update', latest_data)
 
             if time.time() - last_notification_time >= NOTIFICATION_INTERVAL:
                 last_notification_time = time.time()
-                check_and_notify("bio", sensor.sensor_1, SENSOR_THRESHOLD)
-                check_and_notify("non", sensor.sensor_2, SENSOR_THRESHOLD)
-                check_and_notify("rec", sensor.sensor_3, SENSOR_THRESHOLD)
-                check_and_notify("haz", sensor.sensor_4, SENSOR_THRESHOLD)
+                for bin_type, sensor_value in latest_data.items():
+                    check_and_notify(bin_type, sensor_value, SENSOR_THRESHOLD)
     except serial.SerialException:
         print("Serial connection issue.")
     except Exception as e:
@@ -78,13 +73,16 @@ def check_and_notify(bin_type, sensor_value, threshold):
         notification_sent[bin_type] = False
     time.sleep(5)
 
-def sensor_data_updater():
-    while True:
-        update_sensor_data()
-        time.sleep(SENSOR_UPDATE_INTERVAL)
+@app.route('/sensor_data', methods=['GET'])
+def get_sensor_data():
+    return jsonify(latest_data)
+
+@socketio.on('connect')
+def handle_connect():
+    emit('sensor_update', latest_data)
 
 if __name__ == "__main__":
-    updater_thread = threading.Thread(target=sensor_data_updater)
+    updater_thread = threading.Thread(target=sensor_data_refresh)
     updater_thread.daemon = True
     updater_thread.start()
     socketio.run(app, debug=FLASK_DEBUG, host=FLASK_HOST, port=FLASK_PORT, allow_unsafe_werkzeug=True)
