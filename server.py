@@ -6,7 +6,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from polybin import Polybin
+from lib.polybin import Polybin
 
 app = Flask(__name__)
 CORS(app)
