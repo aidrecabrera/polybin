@@ -8,6 +8,7 @@ class Data:
         self.sensors = {f"SENSOR_{i}": 40 for i in range(1, 5)}
 
     def update(self):
+        print(self.sensors)
         """update sensor data from serial connection"""
         if not self.check_transmission():
             return False
