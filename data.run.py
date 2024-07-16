@@ -29,7 +29,7 @@ class Data:
         """check if the specified serial port is available"""
         return self.serial_port in [port.device for port in serial.tools.list_ports.comports()]
 
-data = Data()
+data = Data("/dev/ttyACM0")
 
 data.update()
 print(data.sensors)
