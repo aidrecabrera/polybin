@@ -1,7 +1,7 @@
 import serial
 import time
 
-class BinNotificationSystem:
+class Sms:
     def __init__(self, port="/dev/ttyUSB0", baud_rate=9600):
         self.serial_connection = serial.Serial(port, baud_rate, timeout=1)
         time.sleep(2)
@@ -24,7 +24,7 @@ class BinNotificationSystem:
         
 if __name__ == "__main__":
     port = 'COM6'
-    bin_system = BinNotificationSystem(port)
+    bin_system = Sms(port)
     try:
         bin_system.send_notification('bio')
         time.sleep(5)
