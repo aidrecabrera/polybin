@@ -31,7 +31,7 @@ def main():
             else:
                 print("Invalid choice. Please try again.")
             
-            time.sleep(1)  # Small delay to prevent rapid looping
+            time.sleep(1) 
 
     except KeyboardInterrupt:
         print("Program terminated by user")
