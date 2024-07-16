@@ -1,14 +1,11 @@
-# Initialize the Data object
 from lib.data import Data
 
-data = Data()
-if data.set_serial_port("/dev/ttyACM0"): 
-    if data.retrieve_data():
-        all_sensors = data.get_sensor_data()
-        print(all_sensors)
-        sensor_2_value = data.get_sensor_value(2)
-        print(f"Sensor 2 value: {sensor_2_value}")
-    else:
-        print("Failed to retrieve data")
-else:
-    print("Failed to set serial port")
+
+data = Data("/dev/ttyUSB0")
+while True:
+    data.retrieve_data()
+    print(data.sensor_1)
+    print(data.sensor_2)
+    print(data.sensor_3)
+    print(data.sensor_4)
+    
