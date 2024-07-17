@@ -54,6 +54,9 @@ def process_inference():
         elif result['objects'][0]['class'] == 'hazardous':
             dispose.open_hazardous()
             return
+        else:
+            print("No Detection")
+            return
 
 def capture_and_process():
     while True:
