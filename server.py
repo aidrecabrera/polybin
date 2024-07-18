@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+import time
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -9,7 +10,6 @@ from lib.dispose import Dispose
 from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
-import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -18,48 +18,45 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 
-dispose = Dispose(32, 35, cooldown_period=5)
+dispose = Dispose(32, 35)
 
-last_prediction_time = time.time()
-PREDICTION_COOLDOWN = 5
-
-def on_prediction(predictions, video_frame):
-    global last_prediction_time
-    current_time = time.time()
-    if current_time - last_prediction_time < PREDICTION_COOLDOWN:
-        print("Prediction action prevented: Cooldown in effect")
-        return
-
-    last_prediction_time = current_time
+def on_prediction(predictions, video_frame, dispose):
     render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
-        if predictions['predictions'] and dispose.can_perform_action():
-            object_class = predictions['predictions'][0]['class']
-            confidence = predictions['predictions'][0]['confidence']
-            print("Detected object class:", object_class)
-            print("Confidence:", confidence)
-            if object_class == 'Recyclable':
-                print("Disposing recyclable object")
-                dispose.dispose_recyclable()
-            elif object_class == 'Bio-degradable':
-                print("Disposing bio-degradable object")
-                dispose.dispose_biodegradable()
-            elif object_class == 'Non-biodegradable':
-                print("Disposing non-biodegradable object")
-                dispose.dispose_non_biodegradable()
-            elif object_class == 'Hazardous':
-                print("Disposing hazardous object")
-                dispose.dispose_hazardous()
+        if predictions['predictions']:
+            current_time = time.time()
+            last_action_time = dispose.last_action_time
+            cooldown_period = dispose.COOLDOWN_PERIOD
+            if current_time - last_action_time >= cooldown_period:
+                object_class = predictions['predictions'][0]['class']
+                confidence = predictions['predictions'][0]['confidence']
+                print("Detected object class:", object_class)
+                print("Confidence:", confidence)
+                if object_class == 'Recyclable':
+                    dispose.dispose_recyclable()
+                    status = 'Recyclable'
+                elif object_class == 'Bio-degradable':
+                    dispose.dispose_biodegradable()
+                    status = 'Biodegradable'
+                elif object_class == 'Non-biodegradable':
+                    dispose.dispose_non_biodegradable()
+                    status = 'Non-Biodegradable'
+                elif object_class == 'Hazardous':
+                    dispose.dispose_hazardous()
+                    status = 'Hazardous'
+                dispose.last_action_time = current_time
+                print(f"Action performed: {status}")
             else:
-                print("Unknown object class:", object_class)
+                print("Action prevented: Cooldown in effect")
         else:
             print("No detection or unable to perform action")
     else:
         print("Invalid results format")
 
+        
 def start_pipeline():
     pipeline = InferencePipeline.init(
-        model_id="garbage-segregator-ndyo4/5", 
+        model_id="garbage-segregator-ndyo4/4", 
         video_reference=0, 
         on_prediction=on_prediction,
         confidence=0.7
