@@ -6,14 +6,14 @@ if not cap.isOpened():
     exit()
 while True:
     # Capture frame-by-frame
-    ret, frame = cap.read()
+    ret, buffer = cap.read()  # Updated line
 
     # if frame is read correctly ret is True
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
         break
     # Our operations on the frame come here
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    gray = cv.cvtColor(buffer, cv.COLOR_BGR2GRAY)  # Updated variable name
     # Display the resulting frame
     cv.imshow('frame', gray)
     if cv.waitKey(1) == ord('q'):

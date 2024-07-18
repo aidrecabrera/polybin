@@ -8,6 +8,8 @@ from flask_socketio import SocketIO, emit
 from lib.polybin import Polybin
 from lib.dispose import Dispose
 from inference_sdk import InferenceHTTPClient
+from inference import InferencePipeline
+from inference.core.interfaces.stream.sinks import render_boxes
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -20,31 +22,11 @@ CLIENT = InferenceHTTPClient(
     api_key="MKTjsmucOSIZyKIaoQU7"
 )
 
-def capture_frame():
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return None
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        print("Error: Could not read frame.")
-        return None
-    return frame
+dispose = Dispose(32, 35)
 
-def process_frame(frame):
-    if frame is None:
-        return None
-    cv2.imwrite("temp_frame.jpg", frame)
-    return CLIENT.infer("temp_frame.jpg", model_id="garbage-segregator-ndyo4/5")
-
-def process_inference():
-    dispose = Dispose(32, 35)
-    frame = capture_frame()
-    result = process_frame(frame)
-    
-    if result is not None and 'objects' in result and result['objects'] and dispose.can_perform_action():
-        object_class = result['objects'][0]['class']
+def on_prediction(results, frame):
+    if results and 'objects' in results and results['objects'] and dispose.can_perform_action():
+        object_class = results['objects'][0]['class']
         if object_class == 'recyclable':
             dispose.open_recyclable()
         elif object_class == 'biodegradable':
@@ -58,9 +40,12 @@ def process_inference():
     else:
         print("No detection or unable to perform action")
 
-def capture_and_process():
-    while True:
-        process_inference()
+pipeline = InferencePipeline.init(
+    model_id="garbage-segregator-ndyo4/5", 
+    video_reference=0, 
+    on_prediction=on_prediction, 
+)
+pipeline.start()
 
 def sensor_data_updater():
     while True:
@@ -75,10 +60,6 @@ def handle_connect():
     emit('sensor_update', polybin.latest_data)
 
 if __name__ == "__main__":
-    capture_thread = threading.Thread(target=capture_and_process)
-    capture_thread.daemon = True
-    capture_thread.start()
-
     updater_thread = threading.Thread(target=sensor_data_updater)
     updater_thread.daemon = True
     updater_thread.start()
