@@ -34,7 +34,7 @@ fi
 
 # run frontend application
 echo "Starting frontend application with $PACKAGE_MANAGER"
-$PACKAGE_MANAGER run dev --host &
+$PACKAGE_MANAGER run dev -- --host &
 FRONTEND_PID=$!
 
 # wait for a moment to see if the frontend starts successfully
