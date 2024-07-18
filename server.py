@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import time
+import argparse
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -20,8 +21,18 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 
 dispose = Dispose(32, 35)
 
-def on_prediction(predictions, video_frame):
-    render_boxes(predictions, video_frame)
+parser = argparse.ArgumentParser(description="Garbage Segregation System")
+parser.add_argument('--version', type=int, default=4, help="Model version number (default is 4)")
+parser.add_argument('--render_boxes', type=bool, default=False, help="Enable or disable rendering of boxes")
+parser.add_argument('--confidence', type=float, default=0.7, help="Confidence threshold for inference")
+
+args = parser.parse_args()
+
+model_id = f"garbage-segregator-ndyo4/{args.version}"
+
+def on_prediction(predictions, video_frame, render_boxes_enabled):
+    if render_boxes_enabled:
+        render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
         if predictions['predictions']:
             current_time = time.time()
@@ -53,13 +64,12 @@ def on_prediction(predictions, video_frame):
     else:
         print("Invalid results format")
 
-        
 def start_pipeline():
     pipeline = InferencePipeline.init(
-        model_id="garbage-segregator-ndyo4/4", 
+        model_id=model_id, 
         video_reference=0, 
-        on_prediction=on_prediction,
-        confidence=0.7
+        on_prediction=lambda predictions, video_frame: on_prediction(predictions, video_frame, args.render_boxes),
+        confidence=args.confidence
     )
     pipeline.start()
     pipeline.join()
