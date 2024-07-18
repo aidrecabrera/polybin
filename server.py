@@ -20,18 +20,18 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 dispose = Dispose(32, 35)
 
 def on_prediction(predictions, video_frame):
-    print(predictions, video_frame)
     render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
         if predictions['predictions'] and dispose.can_perform_action():
             object_class = predictions['predictions'][0]['class']
-            if object_class == 'recyclable':
+            print("Detected object class:", object_class)
+            if object_class == 'Recyclable':
                 dispose.open_recyclable()
-            elif object_class == 'biodegradable':
+            elif object_class == 'Biodegradable':
                 dispose.open_non_recyclable()
-            elif object_class == 'non-biodegradable':
+            elif object_class == 'Non-biodegradable':
                 dispose.open_organic()
-            elif object_class == 'hazardous':
+            elif object_class == 'Hazardous':
                 dispose.open_hazardous()
             else:
                 print("Unknown object class:", object_class)
