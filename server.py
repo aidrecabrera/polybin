@@ -54,6 +54,7 @@ def start_pipeline():
         confidence=0.7
     )
     pipeline.start()
+    pipeline.join()
 
 def sensor_data_updater():
     while True:
