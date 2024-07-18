@@ -1,13 +1,12 @@
 import os
 import sys
-import cv2
 import threading
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
+from matplotlib.patches import draw_bbox
 from lib.polybin import Polybin
 from lib.dispose import Dispose
-from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
 
@@ -17,10 +16,6 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
-CLIENT = InferenceHTTPClient(
-    api_url="https://detect.roboflow.com",
-    api_key="MKTjsmucOSIZyKIaoQU7"
-)
 
 dispose = Dispose(32, 35)
 
@@ -40,12 +35,13 @@ def on_prediction(results, frame):
     else:
         print("No detection or unable to perform action")
 
-pipeline = InferencePipeline.init(
-    model_id="garbage-segregator-ndyo4/5", 
-    video_reference=0, 
-    on_prediction=on_prediction, 
-)
-pipeline.start()
+def start_pipeline():
+    pipeline = InferencePipeline.init(
+        model_id="garbage-segregator-ndyo4/5", 
+        video_reference=0, 
+        on_prediction=render_boxes, 
+    )
+    pipeline.start()
 
 def sensor_data_updater():
     while True:
@@ -60,6 +56,10 @@ def handle_connect():
     emit('sensor_update', polybin.latest_data)
 
 if __name__ == "__main__":
+    detection_thread = threading.Thread(target=start_pipeline)
+    detection_thread.daemon = True
+    detection_thread.start()
+
     updater_thread = threading.Thread(target=sensor_data_updater)
     updater_thread.daemon = True
     updater_thread.start()
