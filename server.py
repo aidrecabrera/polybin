@@ -4,9 +4,9 @@ import threading
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
-from matplotlib.patches import draw_bbox
 from lib.polybin import Polybin
 from lib.dispose import Dispose
+from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
 
@@ -20,6 +20,7 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 dispose = Dispose(32, 35)
 
 def on_prediction(results, frame):
+    print(results)
     if results and 'objects' in results and results['objects'] and dispose.can_perform_action():
         object_class = results['objects'][0]['class']
         if object_class == 'recyclable':
@@ -39,7 +40,7 @@ def start_pipeline():
     pipeline = InferencePipeline.init(
         model_id="garbage-segregator-ndyo4/5", 
         video_reference=0, 
-        on_prediction=render_boxes, 
+        on_prediction=on_prediction, 
     )
     pipeline.start()
 
