@@ -20,23 +20,25 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 dispose = Dispose(32, 35)
 
 def on_prediction(results):
-    print(results)
-    if results and 'objects' in results and results['objects'] and dispose.can_perform_action():
-        render_boxes(results['image'], results['objects'])
-        object_class = results['objects'][0]['class']
-        if object_class == 'recyclable':
-            dispose.open_recyclable()
-        elif object_class == 'biodegradable':
-            dispose.open_non_recyclable()
-        elif object_class == 'non-biodegradable':
-            dispose.open_organic()
-        elif object_class == 'hazardous':
-            dispose.open_hazardous()
+    if 'image' in results and 'predictions' in results:
+        render_boxes(results)
+        if results['predictions'] and dispose.can_perform_action():
+            object_class = results['predictions'][0]['class']
+            if object_class == 'recyclable':
+                dispose.open_recyclable()
+            elif object_class == 'biodegradable':
+                dispose.open_non_recyclable()
+            elif object_class == 'non-biodegradable':
+                dispose.open_organic()
+            elif object_class == 'hazardous':
+                dispose.open_hazardous()
+            else:
+                print("Unknown object class:", object_class)
         else:
-            print("Unknown object class:", object_class)
+            print("No detection or unable to perform action")
     else:
-        print("No detection or unable to perform action")
-
+        print("Invalid results format")
+        
 def start_pipeline():
     pipeline = InferencePipeline.init(
         model_id="garbage-segregator-ndyo4/5", 
