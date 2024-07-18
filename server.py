@@ -19,9 +19,10 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 
 dispose = Dispose(32, 35)
 
-def on_prediction(results, frame):
+def on_prediction(results):
     print(results)
     if results and 'objects' in results and results['objects'] and dispose.can_perform_action():
+        render_boxes(results['image'], results['objects'])
         object_class = results['objects'][0]['class']
         if object_class == 'recyclable':
             dispose.open_recyclable()
