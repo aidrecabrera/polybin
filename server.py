@@ -24,7 +24,9 @@ def on_prediction(predictions, video_frame):
     if 'image' in predictions and 'predictions' in predictions:
         if predictions['predictions'] and dispose.can_perform_action():
             object_class = predictions['predictions'][0]['class']
+            confidence = predictions['predictions'][0]['confidence']
             print("Detected object class:", object_class)
+            print("Confidence:", confidence)
             if object_class == 'Recyclable':
                 print("Disposing recyclable object")
                 dispose.open_recyclable()
@@ -48,7 +50,8 @@ def start_pipeline():
     pipeline = InferencePipeline.init(
         model_id="garbage-segregator-ndyo4/5", 
         video_reference=0, 
-        on_prediction=on_prediction, 
+        on_prediction=on_prediction,
+        confidence=0.7
     )
     pipeline.start()
 
