@@ -26,13 +26,17 @@ def on_prediction(predictions, video_frame):
             object_class = predictions['predictions'][0]['class']
             print("Detected object class:", object_class)
             if object_class == 'Recyclable':
-                dispose.open_recyclable()
-            elif object_class == 'Biodegradable':
-                dispose.open_non_recyclable()
+                print("Disposing recyclable object")
+                # dispose.open_recyclable()
+            elif object_class == 'Bio-degradable':
+                print("Disposing bio-degradable object")
+                # dispose.open_non_recyclable()
             elif object_class == 'Non-biodegradable':
-                dispose.open_organic()
+                print("Disposing non-biodegradable object")
+                # dispose.open_organic()
             elif object_class == 'Hazardous':
-                dispose.open_hazardous()
+                print("Disposing hazardous object")
+                # dispose.open_hazardous()
             else:
                 print("Unknown object class:", object_class)
         else:
