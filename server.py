@@ -9,6 +9,7 @@ from lib.dispose import Dispose
 from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
+import time
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -17,9 +18,19 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 
-dispose = Dispose(32, 35)
+dispose = Dispose(32, 35, cooldown_period=5)
+
+last_prediction_time = time.time()
+PREDICTION_COOLDOWN = 5
 
 def on_prediction(predictions, video_frame):
+    global last_prediction_time
+    current_time = time.time()
+    if current_time - last_prediction_time < PREDICTION_COOLDOWN:
+        print("Prediction action prevented: Cooldown in effect")
+        return
+
+    last_prediction_time = current_time
     render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
         if predictions['predictions'] and dispose.can_perform_action():
@@ -45,7 +56,7 @@ def on_prediction(predictions, video_frame):
             print("No detection or unable to perform action")
     else:
         print("Invalid results format")
-        
+
 def start_pipeline():
     pipeline = InferencePipeline.init(
         model_id="garbage-segregator-ndyo4/5", 
