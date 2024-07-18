@@ -29,16 +29,16 @@ def on_prediction(predictions, video_frame):
             print("Confidence:", confidence)
             if object_class == 'Recyclable':
                 print("Disposing recyclable object")
-                dispose.open_recyclable()
+                dispose.dispose_recyclable()
             elif object_class == 'Bio-degradable':
                 print("Disposing bio-degradable object")
-                dispose.open_non_recyclable()
+                dispose.dispose_biodegradable()
             elif object_class == 'Non-biodegradable':
                 print("Disposing non-biodegradable object")
-                dispose.open_organic()
+                dispose.dispose_non_biodegradable()
             elif object_class == 'Hazardous':
                 print("Disposing hazardous object")
-                dispose.open_hazardous()
+                dispose.dispose_hazardous()
             else:
                 print("Unknown object class:", object_class)
         else:
