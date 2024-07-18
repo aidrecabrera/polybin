@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+import time
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -22,29 +23,36 @@ dispose = Dispose(32, 35)
 def on_prediction(predictions, video_frame):
     render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
-        if predictions['predictions'] and dispose.can_perform_action():
-            object_class = predictions['predictions'][0]['class']
-            confidence = predictions['predictions'][0]['confidence']
-            print("Detected object class:", object_class)
-            print("Confidence:", confidence)
-            if object_class == 'Recyclable':
-                print("Disposing recyclable object")
-                dispose.open_recyclable()
-            elif object_class == 'Bio-degradable':
-                print("Disposing bio-degradable object")
-                dispose.open_non_recyclable()
-            elif object_class == 'Non-biodegradable':
-                print("Disposing non-biodegradable object")
-                dispose.open_organic()
-            elif object_class == 'Hazardous':
-                print("Disposing hazardous object")
-                dispose.open_hazardous()
+        if predictions['predictions']:
+            current_time = time.time()
+            last_action_time = dispose.last_action_time
+            cooldown_period = dispose.COOLDOWN_PERIOD
+            if current_time - last_action_time >= cooldown_period:
+                object_class = predictions['predictions'][0]['class']
+                confidence = predictions['predictions'][0]['confidence']
+                print("Detected object class:", object_class)
+                print("Confidence:", confidence)
+                if object_class == 'Recyclable':
+                    dispose.dispose_recyclable()
+                    status = 'Recyclable'
+                elif object_class == 'Bio-degradable':
+                    dispose.dispose_biodegradable()
+                    status = 'Biodegradable'
+                elif object_class == 'Non-biodegradable':
+                    dispose.dispose_non_biodegradable()
+                    status = 'Non-Biodegradable'
+                elif object_class == 'Hazardous':
+                    dispose.dispose_hazardous()
+                    status = 'Hazardous'
+                dispose.last_action_time = current_time
+                print(f"Action performed: {status}")
             else:
-                print("Unknown object class:", object_class)
+                print("Action prevented: Cooldown in effect")
         else:
             print("No detection or unable to perform action")
     else:
         print("Invalid results format")
+
         
 def start_pipeline():
     pipeline = InferencePipeline.init(
