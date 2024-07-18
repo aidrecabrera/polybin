@@ -20,7 +20,7 @@ polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 
 dispose = Dispose(32, 35)
 
-def on_prediction(predictions, video_frame, dispose):
+def on_prediction(predictions, video_frame):
     render_boxes(predictions, video_frame)
     if 'image' in predictions and 'predictions' in predictions:
         if predictions['predictions']:
