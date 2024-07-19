@@ -7,11 +7,10 @@ export const BannerComponent = () => {
       />
       <div className="flex flex-col items-center justify-center gap-2 text-center">
         <h1 className="text-3xl font-bold text-green-700 uppercase md:text-5xl">
-          Auto-Waste Segregation
+        e-SegBin
         </h1>
         <p className="text-md text-primary/95">
-          Efficient separation of waste into categories for effective recycling
-          and disposal.
+        An Automated Solid Waste Segregation Bin for J.H. Cerilles State College
         </p>
       </div>
       <img
