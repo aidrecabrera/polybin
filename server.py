@@ -10,7 +10,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from lib.polybin import Polybin
 from lib.dispose import Dispose
-from lib.logger import Logger
+from lib.async_logger import AsyncLogger
 from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
@@ -26,7 +26,7 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-logger = Logger(url, key)
+logger = AsyncLogger(url, key)
 dispose = Dispose(32, 35)
 polybin = Polybin('/dev/ttyUSB0', socketio, logger)
 
