@@ -6,30 +6,23 @@ class Logger:
         self.supabase: Client = create_client(url, key)
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def log_prediction(self, prediction: dict):
+    def log(self, table_name: str, data: dict, log_type: str) -> bool:
         try:
-            self.supabase.table("prediction_log").insert([prediction])
-            logging.debug(f"Prediction logged: {prediction}")
+            self.supabase.table(table_name).insert([data]).execute()
+            logging.debug(f"{log_type.capitalize()} logged: {data}")
+            return True
         except Exception as e:
-            logging.error(f"Failed to log prediction: {prediction} - Error: {e}")
+            logging.error(f"Failed to log {log_type}: {data} - Error: {e}")
+            return False
 
-    def log_dispose(self, dispose: dict):
-        try:
-            self.supabase.table("dispose_log").insert([dispose])
-            logging.debug(f"Dispose logged: {dispose}")
-        except Exception as e:
-            logging.error(f"Failed to log dispose: {dispose} - Error: {e}")
+    def log_prediction(self, prediction: dict) -> bool:
+        return self.log("prediction_log", prediction, "prediction")
 
-    def log_bin_status(self, status: dict):
-        try:
-            self.supabase.table("bin_levels").insert([status])
-            logging.debug(f"Bin status logged: {status}")
-        except Exception as e:
-            logging.error(f"Failed to log bin status: {status} - Error: {e}")
+    def log_dispose(self, dispose: dict) -> bool:
+        return self.log("dispose_log", dispose, "dispose")
 
-    def log_alert(self, alert: dict):
-        try:
-            self.supabase.table("alert_log").insert([alert])
-            logging.debug(f"Alert logged: {alert}")
-        except Exception as e:
-            logging.error(f"Failed to log alert: {alert} - Error: {e}")
+    def log_bin_status(self, status: dict) -> bool:
+        return self.log("bin_levels", status, "bin status")
+
+    def log_alert(self, alert: dict) -> bool:
+        return self.log("alert_log", alert, "alert")
