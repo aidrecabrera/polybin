@@ -43,10 +43,7 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
         
         if 'image' in predictions and 'predictions' in predictions:
             if predictions['predictions']:
-                current_time = time.time()
-                last_action_time = dispose.last_action_time
-                cooldown_period = dispose.COOLDOWN_PERIOD
-                if current_time - last_action_time >= cooldown_period:
+                if dispose.can_perform_action():
                     object_class = predictions['predictions'][0]['class']
                     confidence = predictions['predictions'][0]['confidence']
                     logging.info(f"Detected object class: {object_class}")
@@ -65,7 +62,6 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                         dispose.dispose_hazardous()
                         status = 'Hazardous'
                     
-                    dispose.last_action_time = current_time
                     logging.info(f"Action performed: {status}")
                 else:
                     logging.info("Action prevented: Cooldown in effect")
