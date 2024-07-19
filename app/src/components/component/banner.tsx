@@ -9,7 +9,7 @@ export const BannerComponent = () => {
         <h1 className="text-3xl font-bold text-green-700 uppercase md:text-5xl">
         e-SegBin
         </h1>
-        <p className="text-md text-primary/95">
+        <p className="text-lg text-primary/95">
         An Automated Solid Waste Segregation Bin for J.H. Cerilles State College
         </p>
       </div>
