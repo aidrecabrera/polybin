@@ -2,11 +2,11 @@ import time
 import serial
 from lib.data import Data
 from lib.sms import Sms
-from logging import Logger
+from lib.async_logger import AsyncLogger
 from flask_socketio import SocketIO
 
 class Polybin:
-    def __init__(self, port, socketio: SocketIO, logger: Logger):
+    def __init__(self, port, socketio: SocketIO, logger: AsyncLogger):
         self.bin_system = Sms(port=port)
         self.socketio = socketio
         self.logger = logger
