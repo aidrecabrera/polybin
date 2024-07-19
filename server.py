@@ -38,12 +38,16 @@ model_id = f"garbage-segregator-ndyo4/{args.version}"
 
 class DetectionState:
     def __init__(self, confirmation_time=2):
-        self.current_detection = None
-        self.detection_start_time = 0
+        self.reset()
         self.confirmation_time = confirmation_time
         self.lock = threading.Lock()
-        self.recent_detections = deque(maxlen=10)
         logging.info(f"DetectionState initialized with confirmation time of {confirmation_time} seconds")
+
+    def reset(self):
+        self.current_detection = None
+        self.detection_start_time = 0
+        self.recent_detections = deque(maxlen=10)
+        logging.info("Detection state reset")
 
     def update(self, detection):
         with self.lock:
@@ -53,6 +57,7 @@ class DetectionState:
                 logging.info(f"New detection: {detection}. Previous: {self.current_detection}")
                 self.current_detection = detection
                 self.detection_start_time = current_time
+                self.recent_detections.clear()
             else:
                 logging.debug(f"Consistent detection: {detection}")
             
@@ -73,7 +78,7 @@ class DetectionState:
             if time_elapsed >= self.confirmation_time:
                 recent_matching_detections = sum(1 for d, _ in self.recent_detections 
                                                  if d == self.current_detection)
-                match_percentage = (recent_matching_detections / len(self.recent_detections)) * 100
+                match_percentage = (recent_matching_detections / len(self.recent_detections)) * 100 if self.recent_detections else 0
                 
                 logging.debug(f"Recent matching detections: {recent_matching_detections}/{len(self.recent_detections)} ({match_percentage:.2f}%)")
                 
@@ -128,8 +133,8 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                             status = 'Hazardous'
                         
                         logging.info(f"Action performed: {status}")
-                        detection_state.current_detection = None  # Reset after disposal
-                        logging.debug("Detection state reset after disposal")
+                        detection_state.reset()  # Reset after disposal
+                        logging.info("Detection state completely reset after disposal")
                     else:
                         logging.warning("Action prevented: Dispose cooldown in effect")
                 else:
