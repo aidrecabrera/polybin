@@ -3,7 +3,7 @@ import serial
 from lib.data import Data
 from lib.sms import Sms
 from flask_socketio import SocketIO
-from logger import Logger
+from lib.logger import Logger
 
 
 class Polybin:
