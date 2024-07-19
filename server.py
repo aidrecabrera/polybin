@@ -1,10 +1,12 @@
 import os
+import subprocess
 import sys
 import threading
 import time
 import argparse
 import logging
 from collections import deque
+import cv2
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -104,11 +106,38 @@ class DetectionState:
 
 detection_state = DetectionState(confirmation_time=2)
 
+def get_second_monitor_position():
+    try:
+        output = subprocess.check_output("xrandr --listmonitors", shell=True).decode("utf-8")
+        lines = output.split('\n')
+        if len(lines) > 1:
+            monitors = [line.split() for line in lines[1:] if line.strip()]
+            if len(monitors) > 1:
+                second_monitor = monitors[1]
+                position = second_monitor[3].split('+')[1:3]
+                return int(position[0]), int(position[1])
+    except Exception as e:
+        print(f"Error detecting second monitor: {e}")
+    return 0, 0
+
+second_monitor_position = get_second_monitor_position()
+
+def display_full_screen(frame_data):
+    cv2.namedWindow("FullScreen", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("FullScreen", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.moveWindow("FullScreen", second_monitor_position[0], second_monitor_position[1])
+    cv2.imshow("FullScreen", frame_data[1])
+    cv2.waitKey(1)
+
 def on_prediction(predictions, video_frame, render_boxes_enabled):
     """Handle predictions from the inference pipeline."""
     try:
         if render_boxes_enabled:
-            render_boxes(predictions, video_frame)
+            render_boxes(
+                predictions, video_frame, 
+                display_size=(1280, 720), 
+                on_frame_rendered=display_full_screen
+            )
         
         if 'image' in predictions and 'predictions' in predictions:
             if predictions['predictions']:
@@ -159,10 +188,10 @@ def start_pipeline():
     """Start the inference pipeline."""
     try:
         pipeline = InferencePipeline.init(
-            model_id=model_id, 
-            video_reference=0, 
-            on_prediction=lambda predictions, video_frame: on_prediction(predictions, video_frame, args.render_boxes),
-            confidence=args.confidence
+        model_id=model_id, 
+        video_reference=0, 
+        on_prediction=lambda predictions, video_frame: on_prediction(predictions, video_frame, args.render_boxes),
+        confidence=args.confidence
         )
         pipeline.start()
         pipeline.join()
