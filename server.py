@@ -34,7 +34,7 @@ def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Garbage Segregation System")
     parser.add_argument('--version', type=int, default=4, help="Model version number (default is 4)")
-    parser.add_argument('--render_boxes', type=bool, default=False, help="Enable or disable rendering of boxes")
+    parser.add_argument('--render_boxes', type=bool, default=True, help="Enable or disable rendering of boxes")
     parser.add_argument('--confidence', type=float, default=0.7, help="Confidence threshold for inference")
     return parser.parse_args()
 
