@@ -26,9 +26,9 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
-dispose = Dispose(32, 35)
 logger = Logger(url, key)
+dispose = Dispose(32, 35)
+polybin = Polybin('/dev/ttyUSB0', socketio, logger)
 
 def parse_arguments():
     """Parse command line arguments."""

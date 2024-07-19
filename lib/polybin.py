@@ -2,15 +2,14 @@ import time
 import serial
 from lib.data import Data
 from lib.sms import Sms
+from logging import Logger
 from flask_socketio import SocketIO
-from lib.logger import Logger
-
 
 class Polybin:
     def __init__(self, port, socketio: SocketIO, logger: Logger):
         self.bin_system = Sms(port=port)
         self.socketio = socketio
-        self.logger = Logger
+        self.logger = logger
         self.latest_data = {
             "SENSOR_1": 40,
             "SENSOR_2": 40,
