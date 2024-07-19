@@ -114,7 +114,7 @@ def get_second_monitor_position():
             monitors = [line.split() for line in lines[1:] if line.strip()]
             if len(monitors) > 1:
                 second_monitor = monitors[1]
-                position = second_monitor[3].split('+')[1:3]
+                position = second_monitor[2].split('+')[1:3]
                 return int(position[0]), int(position[1])
     except Exception as e:
         print(f"Error detecting second monitor: {e}")
