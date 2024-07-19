@@ -10,6 +10,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from lib.polybin import Polybin
 from lib.dispose import Dispose
+from lib.logger import Logger
 from inference_sdk import InferenceHTTPClient
 from inference import InferencePipeline
 from inference.core.interfaces.stream.sinks import render_boxes
@@ -18,12 +19,16 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 polybin = Polybin(port='/dev/ttyUSB0', socketio=socketio)
 dispose = Dispose(32, 35)
+logger = Logger(url, key)
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -107,6 +112,9 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
         
         if 'image' in predictions and 'predictions' in predictions:
             if predictions['predictions']:
+                for prediction in predictions['predictions']:
+                    logger.log_prediction(prediction)
+                
                 object_class = predictions['predictions'][0]['class']
                 confidence = predictions['predictions'][0]['confidence']
                 
@@ -132,8 +140,9 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                             dispose.dispose_hazardous()
                             status = 'Hazardous'
                         
+                        logger.log_dispose({"bin_type": status})
                         logging.info(f"Action performed: {status}")
-                        detection_state.reset()  # Reset after disposal
+                        detection_state.reset()
                         logging.info("Detection state completely reset after disposal")
                     else:
                         logging.warning("Action prevented: Dispose cooldown in effect")
