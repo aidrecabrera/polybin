@@ -1,5 +1,7 @@
 from fileinput import filename
 import logging
+import os
+import tempfile
 import threading
 import queue
 import time
@@ -49,12 +51,16 @@ class AsyncLogger:
     def log_dataset(self, frame_data: tuple):
         logging.info("Logging dataset debug message.")
         try:
-            _, buffer = cv2.imencode('.jpg', frame_data[1])
-            data = buffer.tobytes()
-            bucket_name = "dataset/images"
-            filename = f"{int(time.time())}.jpg"
-            
-            self.supabase.storage.from_(bucket_name).upload(filename, data)
-            logging.info(f"Successfully uploaded {filename} to {bucket_name}.")
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                filename = f"{int(time.time())}.jpg"
+                tmp_file_path = tmp_file.name
+                cv2.imwrite(tmp_file_path, frame_data[1])
+                with open(tmp_file_path, 'rb') as file_data:
+                    bucket_name = "dataset/images"
+                    self.supabase.storage.from_(bucket_name).upload(filename, file_data)
+                    logging.info(f"Successfully uploaded {filename} to {bucket_name}.")
         except Exception as e:
             logging.error(f"Failed to log dataset: {e}")
+        finally:
+            os.remove(tmp_file_path)
+            logging.info(f"Temporary file {tmp_file_path} deleted.")
