@@ -177,7 +177,9 @@ def display_full_screen(frame_data, is_confirmed_detection):
         cv2.imshow("FullScreen", frame_data[1])
         cv2.waitKey(1)
 
+        logging.info("Displaying full screen")
         if is_confirmed_detection:
+            logging.info("Confirmed detection detected")
             timestamp = int(time.time())
             filename = f"confirmed_detection_{timestamp}.jpg"
             save_image_async(frame_data[1].copy(), filename, logger)
@@ -215,9 +217,7 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                 thresholds = polybin.check_thresholds()
                 if confirmed_detection:
                     is_confirmed_detection = True
-                    logging.info(
-                        f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})"
-                    )
+                    logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
 
                     if dispose.can_perform_action():
                         if confirmed_detection == "Recyclable":
@@ -226,24 +226,20 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                                 status = "Recyclable"
                             else:
                                 logging.warning("Action prevented: Recyclable bin full")
-                                alert.play_alert("biodegradable")
+                                alert.play_alert("recyclable")
                         elif confirmed_detection == "Bio-degradable":
                             if thresholds["SENSOR_2"]:
                                 dispose.dispose_biodegradable()
                                 status = "Biodegradable"
                             else:
-                                logging.warning(
-                                    "Action prevented: Biodegradable bin full"
-                                )
-                                alert.play_alert("hazardous")
+                                logging.warning("Action prevented: Biodegradable bin full")
+                                alert.play_alert("biodegradable")
                         elif confirmed_detection == "Non-biodegradable":
                             if thresholds["SENSOR_3"]:
                                 dispose.dispose_non_biodegradable()
                                 status = "Non-Biodegradable"
                             else:
-                                logging.warning(
-                                    "Action prevented: Non-Biodegradable bin full"
-                                )
+                                logging.warning("Action prevented: Non-Biodegradable bin full")
                                 alert.play_alert("non_biodegradable")
                         elif confirmed_detection == "Hazardous":
                             if thresholds["SENSOR_4"]:
@@ -251,7 +247,7 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                                 status = "Hazardous"
                             else:
                                 logging.warning("Action prevented: Hazardous bin full")
-                                alert.play_alert("recyclable")
+                                alert.play_alert("hazardous")
 
                         logger.log_dispose({"bin_type": status})
                         logging.info(f"Action performed: {status}")
