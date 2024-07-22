@@ -33,3 +33,12 @@ class Alert:
             threading.Thread(target=play_sequence).start()
         else:
             print(f"Alert type '{alert_type}' not recognized.")
+
+
+if __name__ == "__main__":
+    alert_system = Alert()
+    alert_types = ["biodegradable", "hazardous", "non_biodegradable", "recyclable"]
+    
+    for alert_type in alert_types:
+        print(f"Testing alert type: {alert_type}")
+        alert_system.play_alert(alert_type)
