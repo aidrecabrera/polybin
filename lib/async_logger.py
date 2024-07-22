@@ -1,6 +1,7 @@
 import logging
 import threading
 import queue
+from xml.sax.handler import property_interning_dict
 from supabase import create_client, Client
 import io
 import cv2
@@ -67,14 +68,7 @@ class AsyncLogger:
         self.log("bin_levels", status, "bin status")
 
     def log_alert(self, alert: dict):
-        self.log("alert_log", alert, "alert")   
+        self.log("alert_log", alert, "alert")
 
-    def log_dataset(self, image_data, filename):
-        is_success, buffer = cv2.imencode(".jpg", image_data)
-        if not is_success:
-            raise ValueError("Failed to encode image")
-
-        io_buf = io.BytesIO(buffer)
-        path_on_supastorage = f"images/{filename}"
-        
-        self.queue.put((self._upload_file, (io_buf, path_on_supastorage, "image/jpeg"), {}))
+    def log_dataset(self):
+        print("Logging dataset example")
