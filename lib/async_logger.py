@@ -53,6 +53,8 @@ class AsyncLogger:
             data = buffer.tobytes()
             bucket_name = "dataset/images"
             filename = f"{int(time.time())}.jpg"
+            
             self.supabase.storage.from_(bucket_name).upload(filename, data)
+            logging.info(f"Successfully uploaded {filename} to {bucket_name}.")
         except Exception as e:
             logging.error(f"Failed to log dataset: {e}")
