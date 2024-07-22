@@ -5,12 +5,21 @@ import time
 from queue import Queue
 from abc import ABC, abstractmethod
 import pygame
+from enum import Enum, auto
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+class AlertCategory(Enum):
+    REMOVE = auto()
+    OTHER = auto()
 
 class AlertStrategy(ABC):
     @abstractmethod
     def play(self, alert_system):
+        pass
+
+    @abstractmethod
+    def get_category(self):
         pass
 
 class StandardAlert(AlertStrategy):
@@ -21,6 +30,9 @@ class StandardAlert(AlertStrategy):
         alert_system._play_sound(alert_system.alerts[self.alert_type])
         alert_system._play_sound(alert_system.alerts["please_empty"])
 
+    def get_category(self):
+        return AlertCategory.OTHER
+
 class RemoveAlert(AlertStrategy):
     def __init__(self, alert_type):
         self.alert_type = alert_type
@@ -28,6 +40,9 @@ class RemoveAlert(AlertStrategy):
     def play(self, alert_system):
         alert_system._play_sound(alert_system.alerts[self.alert_type])
         alert_system._play_sound(alert_system.alerts["remove"])
+
+    def get_category(self):
+        return AlertCategory.REMOVE
 
 class Alert:
     def __init__(self):
@@ -40,8 +55,14 @@ class Alert:
             "please_empty": os.path.join(os.path.dirname(__file__), "please_empty.mp3"),
             "remove": os.path.join(os.path.dirname(__file__), "remove.mp3"),
         }
-        self.last_play_time = 0
-        self.cooldown_time = 30
+        self.last_play_time = {
+            AlertCategory.REMOVE: 0,
+            AlertCategory.OTHER: 0
+        }
+        self.cooldown_time = {
+            AlertCategory.REMOVE: 30, 
+            AlertCategory.OTHER: 300    
+        }
         self.lock = threading.Lock()
         self.queue = Queue()
         self.currently_playing = threading.Event()
@@ -62,22 +83,23 @@ class Alert:
     def _play_alert(self, alert_strategy):
         with self.lock:
             current_time = time.time()
+            category = alert_strategy.get_category()
 
             if self.currently_playing.is_set():
                 print(f"Alert already playing. Skipping {alert_strategy.alert_type}.")
                 return
 
-            time_since_last_play = current_time - self.last_play_time
-            if time_since_last_play < self.cooldown_time:
-                print(f"Global cooldown active. Skipping {alert_strategy.alert_type}.")
+            time_since_last_play = current_time - self.last_play_time[category]
+            if time_since_last_play < self.cooldown_time[category]:
+                print(f"Cooldown active for {category.name}. Skipping {alert_strategy.alert_type}.")
                 return
 
-            print(f"Playing alert sound: {alert_strategy.alert_type}")
+            print(f"Playing alert sound: {alert_strategy.alert_type} (Category: {category.name})")
             self.currently_playing.set()
             alert_strategy.play(self)
             self.currently_playing.clear()
 
-            self.last_play_time = current_time
+            self.last_play_time[category] = current_time
 
     def _queue_alert(self, alert_strategy):
         if alert_strategy.alert_type in self.alerts:
@@ -106,7 +128,7 @@ if __name__ == "__main__":
     print("Simulating multiple on_prediction calls...")
     for _ in range(3):
         simulate_on_prediction(alert_system)
-        time.sleep(1)
+        time.sleep(1) 
 
     print("\nTesting individual alert types...")
     alert_types = ["bio", "haz", "non", "rec"]
@@ -116,14 +138,22 @@ if __name__ == "__main__":
         alert_system.play_remove(alert_type)
         time.sleep(1)
 
-    print("\nTesting global cooldown...")
+    print("\nTesting cooldowns...")
     print("Attempting to play 'bio' alert again immediately:")
     alert_system.play_alert("bio")
+    print("Attempting to play 'remove bio' alert again immediately:")
     alert_system.play_remove("bio")
 
-    print("\nWaiting for cooldown to expire...")
-    time.sleep(31)
-    print("Attempting to play 'haz' alert after cooldown:")
+    print("\nWaiting for OTHER cooldown to expire...")
+    time.sleep(31) 
+    print("Attempting to play 'haz' alert after OTHER cooldown:")
     alert_system.play_alert("haz")
+    print("Attempting to play 'remove haz' alert after OTHER cooldown (should still be in BIN cooldown):")
+    alert_system.play_remove("haz")
+
+    print("\nWaiting for BIN cooldown to expire...")
+    time.sleep(270) 
+    print("Attempting to play 'remove rec' alert after BIN cooldown:")
+    alert_system.play_remove("rec")
 
     time.sleep(10)
