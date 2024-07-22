@@ -169,29 +169,29 @@ def save_image_async(image_data, filename, logger):
     thread = threading.Thread(target=logger.log_dataset, args=(image_data, filename))
     thread.start()
 
-def display_full_screen(frame_data, is_confirmed_detection):
+def display_full_screen(frame_data):
     try:
         cv2.namedWindow("FullScreen", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("FullScreen", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.moveWindow("FullScreen", second_monitor_position[0], second_monitor_position[1])
         cv2.imshow("FullScreen", frame_data[1])
         cv2.waitKey(1)
-        
-        logger.log_dataset(frame_data, is_confirmed_detection)
-
     except Exception as e:
         logging.error(f"Error in display_full_screen: {e}", exc_info=True)
 
 
 def on_prediction(predictions, video_frame, render_boxes_enabled):
     try:
-        is_confirmed_detection = False
         if render_boxes_enabled:
+            def on_frame_rendered(frame_data):
+                logger.log_dataset(frame_data)
+                display_full_screen(frame_data)
+            
             render_boxes(
                 predictions,
                 video_frame,
                 display_size=(1280, 720),
-                on_frame_rendered=lambda frame_data: display_full_screen(frame_data, is_confirmed_detection)
+                on_frame_rendered=on_frame_rendered
             )
             
         thresholds = polybin.check_thresholds()
@@ -212,7 +212,6 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                 detection_state.update(object_class)
                 confirmed_detection = detection_state.get_confirmed_detection()
                 if confirmed_detection:
-                    is_confirmed_detection = True
                     logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
 
                     if dispose.can_perform_action():

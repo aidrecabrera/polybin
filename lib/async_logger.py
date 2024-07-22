@@ -46,15 +46,13 @@ class AsyncLogger:
     def log_alert(self, alert: dict):
         self.log("alert_log", alert, "alert")
 
-    def log_dataset(self, frame_data: tuple, is_confirmed_detection: bool):
+    def log_dataset(self, frame_data: tuple):
         logging.info("Logging dataset debug message.")
-        logging.info(f"Is confirmed detection: {is_confirmed_detection}")
         try:
-            if is_confirmed_detection:
-                _, buffer = cv2.imencode('.jpg', frame_data[1])
-                data = buffer.tobytes()
-                bucket_name = "dataset/images"
-                filename = f"{int(time.time())}.jpg"
-                self.supabase.storage.from_(bucket_name).upload(filename, data)
+            _, buffer = cv2.imencode('.jpg', frame_data[1])
+            data = buffer.tobytes()
+            bucket_name = "dataset/images"
+            filename = f"{int(time.time())}.jpg"
+            self.supabase.storage.from_(bucket_name).upload(filename, data)
         except Exception as e:
             logging.error(f"Failed to log dataset: {e}")
