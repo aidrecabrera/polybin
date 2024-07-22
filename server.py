@@ -184,7 +184,6 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
     try:
         if render_boxes_enabled:
             def on_frame_rendered(frame_data):
-                logger.log_dataset(frame_data)
                 display_full_screen(frame_data)
             
             render_boxes(
@@ -213,6 +212,8 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                 confirmed_detection = detection_state.get_confirmed_detection()
                 if confirmed_detection:
                     logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
+                    
+                    logger.log_dataset(video_frame)
 
                     if dispose.can_perform_action():
                         status = None
