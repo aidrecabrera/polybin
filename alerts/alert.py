@@ -1,13 +1,13 @@
 import os
 import sys
 import threading
-from playsound import playsound
+import pygame
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
 class Alert:
     def __init__(self):
+        pygame.mixer.init()
         self.alerts = {
             "biodegradable": os.path.join(
                 os.path.dirname(__file__), "biodegradable.mp3"
@@ -21,7 +21,10 @@ class Alert:
         }
 
     def _play_sound(self, sound_file):
-        playsound(sound_file)
+        pygame.mixer.music.load(sound_file)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
 
     def play_alert(self, alert_type):
         if alert_type in self.alerts:
@@ -33,7 +36,6 @@ class Alert:
             threading.Thread(target=play_sequence).start()
         else:
             print(f"Alert type '{alert_type}' not recognized.")
-
 
 if __name__ == "__main__":
     alert_system = Alert()
