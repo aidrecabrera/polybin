@@ -216,41 +216,31 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                     logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
 
                     if dispose.can_perform_action():
+                        status = None
                         if confirmed_detection == "Recyclable":
-                            if thresholds["SENSOR_1"]:
-                                dispose.dispose_recyclable()
-                                status = "Recyclable"
-                            else:
-                                logging.warning("Action prevented: Recyclable bin full")
-                                alert.play_alert("recyclable")
+                            dispose.dispose_recyclable(thresholds["SENSOR_1"])
+                            status = "Recyclable"
+                            logging.warning("Action prevented: Recyclable bin full")
                         elif confirmed_detection == "Bio-degradable":
-                            if thresholds["SENSOR_2"]:
-                                dispose.dispose_biodegradable()
-                                status = "Biodegradable"
-                            else:
-                                logging.warning("Action prevented: Biodegradable bin full")
-                                alert.play_alert("biodegradable")
+                            dispose.dispose_biodegradable(thresholds["SENSOR_2"])
+                            status = "Biodegradable"
+                            logging.warning("Action prevented: Biodegradable bin full")
                         elif confirmed_detection == "Non-biodegradable":
-                            if thresholds["SENSOR_3"]:
-                                dispose.dispose_non_biodegradable()
-                                status = "Non-Biodegradable"
-                            else:
-                                logging.warning("Action prevented: Non-Biodegradable bin full")
-                                alert.play_alert("non_biodegradable")
+                            dispose.dispose_non_biodegradable(thresholds["SENSOR_3"])
+                            status = "Non-Biodegradable"
+                            logging.warning("Action prevented: Non-Biodegradable bin full")
                         elif confirmed_detection == "Hazardous":
-                            if thresholds["SENSOR_4"]:
-                                dispose.dispose_hazardous()
-                                status = "Hazardous"
-                            else:
-                                logging.warning("Action prevented: Hazardous bin full")
-                                alert.play_alert("hazardous")
-
-                        logger.log_dispose({"bin_type": status})
-                        logging.info(f"Action performed: {status}")
-                        detection_state.reset()
-                        logging.info("Detection state completely reset after disposal")
-                    else:
-                        logging.warning("Action prevented: Dispose cooldown in effect")
+                            dispose.dispose_hazardous(thresholds["SENSOR_4"])
+                            status = "Hazardous"
+                            logging.warning("Action prevented: Hazardous bin full")
+                        
+                        if status:
+                            detection_state.reset()
+                            logger.log_dispose({"bin_type": status})
+                            logging.info(f"Action performed: {status}")
+                            logging.info("Detection state completely reset after disposal")
+                        else:
+                            logging.warning("Action prevented: Dispose cooldown in effect")
                 else:
                     logging.debug(f"Detection not yet confirmed: {object_class}")
             else:
