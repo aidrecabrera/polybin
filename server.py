@@ -222,22 +222,22 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                         if confirmed_detection == "Recyclable":
                             logging.debug(f"Threshold SENSOR_1: {thresholds['SENSOR_1']}")
                             if thresholds["SENSOR_1"]:
-                                dispose.dispose_recyclable()
-                                status = "Recyclable"
+                                dispose.dispose_biodegradable()
+                                status = "Biodegradable"
                             else:
                                 logging.warning("Action prevented: Recyclable bin full")
                         elif confirmed_detection == "Bio-degradable":
                             logging.debug(f"Threshold SENSOR_2: {thresholds['SENSOR_2']}")
                             if thresholds["SENSOR_2"]:
-                                dispose.dispose_biodegradable()
-                                status = "Biodegradable"
+                                dispose.dispose_non_biodegradable()
+                                status = "Non-Biodegradable"
                             else:
                                 logging.warning("Action prevented: Biodegradable bin full")
                         elif confirmed_detection == "Non-biodegradable":
                             logging.debug(f"Threshold SENSOR_3: {thresholds['SENSOR_3']}")
                             if thresholds["SENSOR_3"]:
-                                dispose.dispose_non_biodegradable()
-                                status = "Non-Biodegradable"
+                                dispose.dispose_recyclable()
+                                status = "Recyclable"
                             else:
                                 logging.warning("Action prevented: Non-Biodegradable bin full")
                         elif confirmed_detection == "Hazardous":
