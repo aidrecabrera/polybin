@@ -241,12 +241,16 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                             else:
                                 if confirmed_detection == "Bio-degradable":
                                     logging.warning("Action prevented: Bio-degradable bin full. Please empty the bin.")
+                                    alert.play_alert("biodegradable")
                                 elif confirmed_detection == "Non-biodegradable":
                                     logging.warning("Action prevented: Non-biodegradable bin full. Please empty the bin.")
+                                    alert.play_alert("non_biodegradable")
                                 elif confirmed_detection == "Recyclable":
                                     logging.warning("Action prevented: Recyclable bin full. Please empty the bin.")
+                                    alert.play_alert("recyclable")
                                 elif confirmed_detection == "Hazardous":
                                     logging.warning("Action prevented: Hazardous bin full. Please empty the bin.")
+                                    alert.play_alert("hazardous")
 
                         if status:
                             detection_state.reset()
