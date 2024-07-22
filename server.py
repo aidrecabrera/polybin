@@ -199,7 +199,10 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                 display_size=(1280, 720),
                 on_frame_rendered=lambda frame_data: display_full_screen(frame_data, is_confirmed_detection)
             )
-
+            
+        thresholds = polybin.check_thresholds()
+        logging.info(f"Thresholds: {thresholds}")
+        
         if "image" in predictions and "predictions" in predictions:
             if predictions["predictions"]:
                 for prediction in predictions["predictions"]:
@@ -214,7 +217,6 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
 
                 detection_state.update(object_class)
                 confirmed_detection = detection_state.get_confirmed_detection()
-                thresholds = polybin.check_thresholds()
                 if confirmed_detection:
                     is_confirmed_detection = True
                     logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
