@@ -34,33 +34,21 @@ class Dispose:
         time.sleep(1)
         self.set_servo_angle(self.SERVO_PIN_2, 90)
 
-    def dispose_biodegradable(self, allow):
-        if allow:
-            print("Performing action: Disposing Biodegradable")
-            self.dispose(0, 0)
-        else:
-            print("Action prevented: Biodegradable waste not allowed")
+    def dispose_biodegradable(self):
+        print("Performing action: Disposing Biodegradable")
+        self.dispose(0, 0)
 
-    def dispose_non_biodegradable(self, allow):
-        if allow:
-            print("Performing action: Disposing Non-Biodegradable")
-            self.dispose(90, 0)
-        else:
-            print("Action prevented: Non-Biodegradable waste not allowed")
+    def dispose_non_biodegradable(self):
+        print("Performing action: Disposing Non-Biodegradable")
+        self.dispose(90, 0)
 
-    def dispose_recyclable(self, allow):
-        if allow:
-            print("Performing action: Disposing Recyclable")
-            self.dispose(0, 180)
-        else:
-            print("Action prevented: Recyclable waste not allowed")
+    def dispose_recyclable(self):
+        print("Performing action: Disposing Recyclable")
+        self.dispose(0, 180)
 
-    def dispose_hazardous(self, allow):
-        if allow:
-            print("Performing action: Disposing Dangerous/Hazardous Waste")
-            self.dispose(90, 180)
-        else:
-            print("Action prevented: Dangerous/Hazardous waste not allowed")
+    def dispose_hazardous(self):
+        print("Performing action: Disposing Dangerous/Hazardous Waste")
+        self.dispose(90, 180)
 
     def can_perform_action(self):
         current_time = time.time()
