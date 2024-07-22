@@ -37,6 +37,17 @@ class Alert:
             threading.Thread(target=play_sequence).start()
         else:
             print(f"Alert type '{alert_type}' not recognized.")
+    
+    def play_remove(self, alert_type):
+        if alert_type in self.alerts:
+            print("Playing alert sound: ", alert_type)
+            def play_sequence():
+                self._play_sound(self.alerts[alert_type])
+                self._play_sound(self.alerts["remove"])
+
+            threading.Thread(target=play_sequence).start()
+        else:
+            print(f"Alert type '{alert_type}' not recognized.")
 
 if __name__ == "__main__":
     alert_system = Alert()
