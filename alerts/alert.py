@@ -9,15 +9,16 @@ class Alert:
     def __init__(self):
         pygame.mixer.init()
         self.alerts = {
-            "biodegradable": os.path.join(
+            "bio": os.path.join(
                 os.path.dirname(__file__), "biodegradable.mp3"
             ),
-            "hazardous": os.path.join(os.path.dirname(__file__), "hazardous.mp3"),
-            "non_biodegradable": os.path.join(
+            "non": os.path.join(
                 os.path.dirname(__file__), "non_biodegradable.mp3"
             ),
-            "recyclable": os.path.join(os.path.dirname(__file__), "recyclable.mp3"),
+            "rec": os.path.join(os.path.dirname(__file__), "recyclable.mp3"),
+            "haz": os.path.join(os.path.dirname(__file__), "hazardous.mp3"),
             "please_empty": os.path.join(os.path.dirname(__file__), "please_empty.mp3"),
+            "remove": os.path.join(os.path.dirname(__file__), "remove.mp3"),
         }
 
     def _play_sound(self, sound_file):

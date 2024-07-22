@@ -1,5 +1,6 @@
 import time
 import serial
+from alerts.alert import Alert
 from lib.data import Data
 from lib.sms import Sms
 from lib.async_logger import AsyncLogger
@@ -23,6 +24,7 @@ class Polybin:
             "haz": False,
         }
         self.last_notification_time = time.time()
+        self.alert = Alert()
 
     def update_sensor_data(self):
         sensor = Data()
@@ -54,8 +56,9 @@ class Polybin:
     def check_and_notify(self, bin_type, sensor_value, threshold):
         if sensor_value <= threshold and not self.notification_sent[bin_type]:
             self.bin_system.send_notification(bin_type)
-            self.notification_sent[bin_type] = True
             self.logger.log_alert({"bin_type": bin_type})
+            self.alert.play_alert(bin_type)
+            self.notification_sent[bin_type] = True
         elif sensor_value > threshold:
             self.notification_sent[bin_type] = False
         time.sleep(5)
