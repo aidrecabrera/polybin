@@ -35,6 +35,7 @@ logger = AsyncLogger(url, key)
 dispose = Dispose(32, 35)
 polybin = Polybin("/dev/ttyUSB0", socketio, logger)
 
+ALERT_COOLDOWN = 10  # Cooldown period in seconds for playing the alert
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -56,16 +57,15 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-
 args = parse_arguments()
 model_id = f"garbage-segregator-ndyo4/{args.version}"
-
 
 class DetectionState:
     def __init__(self, confirmation_time=2):
         self.reset()
         self.confirmation_time = confirmation_time
         self.lock = threading.Lock()
+        self.last_alert_time = 0
         logging.info(
             f"DetectionState initialized with confirmation time of {confirmation_time} seconds"
         )
@@ -141,10 +141,17 @@ class DetectionState:
         logging.debug(f"get_confirmed_detection called. Result: {result}")
         return result
 
+    def can_play_alert(self):
+        current_time = time.time()
+        if current_time - self.last_alert_time >= ALERT_COOLDOWN:
+            self.last_alert_time = current_time
+            return True
+        else:
+            logging.debug("Alert cooldown in effect")
+            return False
 
 detection_state = DetectionState(confirmation_time=2)
 alert = Alert()
-
 
 def get_second_monitor_position():
     try:
@@ -161,7 +168,6 @@ def get_second_monitor_position():
     except Exception as e:
         print(f"Error detecting second monitor: {e}")
     return 0, 0
-
 
 second_monitor_position = get_second_monitor_position()
 
@@ -239,7 +245,9 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                                     dispose.dispose_hazardous()
                                     status = "Hazardous"
                             else:
-                                alert.play_alert("remove")
+                                if detection_state.can_play_alert() and confirmed_detection:
+                                    logging.info("Threshold exceeded. Playing alert")
+                                    alert.play_alert("remove")
 
                         if status:
                             detection_state.reset()
@@ -257,7 +265,6 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
     except Exception as e:
         logging.error(f"Error in on_prediction: {e}", exc_info=True)
 
-
 def start_pipeline():
     """Start the inference pipeline."""
     try:
@@ -274,7 +281,6 @@ def start_pipeline():
     except Exception as e:
         logging.error(f"Error in start_pipeline: {e}")
 
-
 def sensor_data_updater():
     """Continuously update sensor data."""
     try:
@@ -282,7 +288,6 @@ def sensor_data_updater():
             polybin.update_sensor_data()
     except Exception as e:
         logging.error(f"Error in sensor_data_updater: {e}")
-
 
 @app.route("/sensor_data", methods=["GET"])
 def get_sensor_data():
@@ -293,7 +298,6 @@ def get_sensor_data():
         logging.error(f"Error in get_sensor_data: {e}")
         return jsonify({"error": str(e)}), 500
 
-
 @socketio.on("connect")
 def handle_connect():
     """Handle client connections."""
@@ -301,7 +305,6 @@ def handle_connect():
         emit("sensor_update", polybin.latest_data)
     except Exception as e:
         logging.error(f"Error in handle_connect: {e}")
-
 
 if __name__ == "__main__":
     try:
