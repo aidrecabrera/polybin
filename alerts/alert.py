@@ -26,10 +26,10 @@ class Alert:
     def play_alert(self, alert_type):
         if alert_type in self.alerts:
             print("Playing alert sound: ", alert_type)
-            # def play_sequence():
-            #     self._play_sound(self.alerts[alert_type])
-            #     self._play_sound(self.alerts["please_empty"])
+            def play_sequence():
+                self._play_sound(self.alerts[alert_type])
+                self._play_sound(self.alerts["please_empty"])
 
-            # threading.Thread(target=play_sequence).start()
+            threading.Thread(target=play_sequence).start()
         else:
             print(f"Alert type '{alert_type}' not recognized.")
