@@ -11,10 +11,10 @@ class Polybin:
         self.socketio = socketio
         self.logger = logger
         self.latest_data = {
-            "SENSOR_1": 40,
-            "SENSOR_2": 40,
-            "SENSOR_3": 40,
-            "SENSOR_4": 40,
+            "SENSOR_1": 40,  # Biodegradable
+            "SENSOR_2": 40,  # Non-biodegradable
+            "SENSOR_3": 40,  # Recyclable
+            "SENSOR_4": 40,  # Hazardous
         }
         self.notification_sent = {
             "bio": False,
@@ -36,9 +36,7 @@ class Polybin:
                     "SENSOR_4": sensor.sensor_4,
                 }
                 self.socketio.emit("sensor_update", self.latest_data)
-
                 self.logger.log_bin_status(self.latest_data)
-
                 if time.time() - self.last_notification_time >= 10:
                     self.last_notification_time = time.time()
                     self.check_and_notify("bio", sensor.sensor_1, 13)
@@ -63,4 +61,4 @@ class Polybin:
         time.sleep(5)
 
     def check_thresholds(self):
-        return {sensor: not (data <= 13) for sensor, data in self.latest_data.items()}
+        return {sensor: data > 13 for sensor, data in self.latest_data.items()}
