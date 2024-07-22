@@ -55,7 +55,7 @@ class AsyncLogger:
 
     # TODO: review this change
     def log(self, table_name: str, data: dict, log_type: str):
-        self.queue.put((self._log, (table_name, data, log_type), {}))
+        self.queue.put((table_name, data, log_type))
 
     def log_prediction(self, prediction: dict):
         self.log("prediction_log", prediction, "prediction")
