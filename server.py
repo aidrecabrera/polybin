@@ -144,7 +144,7 @@ class DetectionState:
 
 detection_state = DetectionState(confirmation_time=2)
 alert = Alert()
-
+is_confirmed_detection = False
 
 def get_second_monitor_position():
     try:
@@ -184,7 +184,7 @@ def display_full_screen(frame_data, is_confirmed_detection):
 
 def on_prediction(predictions, video_frame, render_boxes_enabled):
     try:
-        is_confirmed_detection = False
+        
         if render_boxes_enabled:
             render_boxes(
                 predictions,
