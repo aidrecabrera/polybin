@@ -144,7 +144,7 @@ class DetectionState:
 
 detection_state = DetectionState(confirmation_time=2)
 alert = Alert()
-is_confirmed_detection = False
+
 
 def get_second_monitor_position():
     try:
@@ -164,6 +164,7 @@ def get_second_monitor_position():
 
 
 second_monitor_position = get_second_monitor_position()
+is_confirmed_detection = False
 
 def save_image_async(image_data, filename, logger):
     thread = threading.Thread(target=logger.log_dataset, args=(image_data, filename))
@@ -182,9 +183,9 @@ def display_full_screen(frame_data, is_confirmed_detection):
     except Exception as e:
         logging.error(f"Error in display_full_screen: {e}", exc_info=True)
 
+
 def on_prediction(predictions, video_frame, render_boxes_enabled):
     try:
-        
         if render_boxes_enabled:
             render_boxes(
                 predictions,
