@@ -67,3 +67,6 @@ class Polybin:
         elif sensor_value > threshold:
             self.notification_sent[bin_type] = False
         time.sleep(5)
+
+    def check_thresholds(self):
+        return {sensor: not (data <= 13) for sensor, data in self.latest_data.items()}

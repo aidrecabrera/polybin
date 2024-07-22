@@ -151,23 +151,35 @@ def on_prediction(predictions, video_frame, render_boxes_enabled):
                 
                 detection_state.update(object_class)
                 confirmed_detection = detection_state.get_confirmed_detection()
-
+                thresholds = polybin.check_thresholds()
                 if confirmed_detection:
                     logging.info(f"Confirmed detection: {confirmed_detection} (confidence: {confidence:.2f})")
 
                     if dispose.can_perform_action():
                         if confirmed_detection == 'Recyclable':
-                            dispose.dispose_recyclable()
-                            status = 'Recyclable'
+                            if thresholds['SENSOR_1']:
+                                dispose.dispose_recyclable()
+                                status = 'Recyclable'
+                            else:
+                                logging.warning("Action prevented: Recyclable bin full")
                         elif confirmed_detection == 'Bio-degradable':
-                            dispose.dispose_biodegradable()
-                            status = 'Biodegradable'
+                            if thresholds['SENSOR_2']:
+                                dispose.dispose_biodegradable()
+                                status = 'Biodegradable'
+                            else:
+                                logging.warning("Action prevented: Biodegradable bin full")
                         elif confirmed_detection == 'Non-biodegradable':
-                            dispose.dispose_non_biodegradable()
-                            status = 'Non-Biodegradable'
+                            if thresholds['SENSOR_3']:
+                                dispose.dispose_non_biodegradable()
+                                status = 'Non-Biodegradable'
+                            else:
+                                logging.warning("Action prevented: Non-Biodegradable bin full")
                         elif confirmed_detection == 'Hazardous':
-                            dispose.dispose_hazardous()
-                            status = 'Hazardous'
+                            if thresholds['SENSOR_4']:
+                                dispose.dispose_hazardous()
+                                status = 'Hazardous'
+                            else:
+                                logging.warning("Action prevented: Hazardous bin full")
                         
                         logger.log_dispose({"bin_type": status})
                         logging.info(f"Action performed: {status}")

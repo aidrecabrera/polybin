@@ -41,4 +41,4 @@ class AsyncLogger:
         self.log("bin_levels", status, "bin status")
 
     def log_alert(self, alert: dict):
-        self.log("alert_log", alert, "alert")
+        self.log("alert_log", alert, "alert")        
