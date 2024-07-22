@@ -1,12 +1,7 @@
 import logging
 import threading
 import queue
-from xml.sax.handler import property_interning_dict
 from supabase import create_client, Client
-import io
-import cv2
-import numpy as np
-
 
 class AsyncLogger:
     def __init__(self, url: str, key: str):
@@ -14,7 +9,6 @@ class AsyncLogger:
         self.queue = queue.Queue()
         self.thread = threading.Thread(target=self._worker, daemon=True)
         self.thread.start()
-        self.lock = threading.Lock()
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def _worker(self):
@@ -26,35 +20,14 @@ class AsyncLogger:
                 logging.error(f"AsyncLogger worker error: {e}")
             finally:
                 self.queue.task_done()
-                
-    def _execute_task(self, task):
-        method, args, kwargs = task
-        try:
-            method(*args, **kwargs)
-        except Exception as e:
-            logging.error(f"Failed to execute task: {method.__name__} - Error: {e}")
 
     def _log(self, table_name: str, data: dict, log_type: str):
         try:
-            with self.lock:
-                self.supabase.table(table_name).insert([data]).execute()
+            self.supabase.table(table_name).insert([data]).execute()
             logging.debug(f"{log_type.capitalize()} logged: {data}")
         except Exception as e:
             logging.error(f"Failed to log {log_type}: {data} - Error: {e}")
-            
-    def _upload_file(self, file_data, path, content_type):
-        try:
-            with self.lock:
-                self.supabase.storage.from_("dataset").upload(
-                    file=file_data,
-                    path=path,
-                    file_options={"content-type": content_type}
-                )
-            logging.debug(f"File uploaded: {path}")
-        except Exception as e:
-            logging.error(f"Failed to upload file {path}: {e}")
 
-    # TODO: review this change
     def log(self, table_name: str, data: dict, log_type: str):
         self.queue.put((table_name, data, log_type))
 
@@ -71,4 +44,4 @@ class AsyncLogger:
         self.log("alert_log", alert, "alert")
 
     def log_dataset(self):
-        print("Logging dataset example")
+        logging.info("Logging dataset debug message.")
