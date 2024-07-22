@@ -40,6 +40,8 @@ class RemoveAlert(AlertStrategy):
     def play(self, alert_system):
         alert_system._play_sound(alert_system.alerts[self.alert_type])
         alert_system._play_sound(alert_system.alerts["remove"])
+        time.sleep(2)
+        alert_system._play_sound(alert_system.alerts["remove"])
 
     def get_category(self):
         return AlertCategory.REMOVE
@@ -60,7 +62,7 @@ class Alert:
             AlertCategory.OTHER: 0
         }
         self.cooldown_time = {
-            AlertCategory.REMOVE: 30, 
+            AlertCategory.REMOVE: 30,
             AlertCategory.OTHER: 300    
         }
         self.lock = threading.Lock()
