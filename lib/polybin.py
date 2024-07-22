@@ -57,13 +57,7 @@ class Polybin:
         if sensor_value <= threshold and not self.notification_sent[bin_type]:
             self.bin_system.send_notification(bin_type)
             self.notification_sent[bin_type] = True
-            alerts = {
-                'bio': {"alert": "Biodegradable"},
-                'non': {"alert": "Non-biodegradable"},
-                'rec': {"alert": "Recyclable"},
-                'haz': {"alert": "Hazardous"}
-            }
-            self.logger.log_alert(alerts[bin_type])
+            self.logger.log_alert({"bin_type": bin_type})
         elif sensor_value > threshold:
             self.notification_sent[bin_type] = False
         time.sleep(5)
