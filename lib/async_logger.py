@@ -1,7 +1,10 @@
+from fileinput import filename
 import logging
 import threading
 import queue
+import time
 from supabase import create_client, Client
+import cv2
 
 class AsyncLogger:
     def __init__(self, url: str, key: str):
@@ -43,5 +46,11 @@ class AsyncLogger:
     def log_alert(self, alert: dict):
         self.log("alert_log", alert, "alert")
 
-    def log_dataset(self):
+    def log_dataset(self, frame_data: tuple, is_confirmed_detection: bool):
         logging.info("Logging dataset debug message.")
+        if is_confirmed_detection:
+            _, buffer = cv2.imencode('.jpg', frame_data[1])
+            data = buffer.tobytes()
+            bucket_name = "dataset/images"
+            filename = f"{int(time.time())}.jpg"
+            self.supabase.storage.from_(bucket_name).upload(filename, data)

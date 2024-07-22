@@ -177,7 +177,7 @@ def display_full_screen(frame_data, is_confirmed_detection):
         cv2.imshow("FullScreen", frame_data[1])
         cv2.waitKey(1)
         
-        # cv2.imwrite("saved_image.jpg", frame_data[1])
+        logger.log_dataset(frame_data, is_confirmed_detection)
 
     except Exception as e:
         logging.error(f"Error in display_full_screen: {e}", exc_info=True)
