@@ -41,6 +41,8 @@ class AsyncLogger:
         self.log("bin_levels", status, "bin status")
 
     def log_alert(self, alert: dict):
+        logging.info("Logging alert debug message.")
+        logging.debug(f"Alert logged: {alert}")
         self.log("alert_log", alert, "alert")
 
     def log_dataset(self):
