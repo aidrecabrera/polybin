@@ -22,7 +22,14 @@ class Dispose:
             pwm.start(0)
             duty = angle / 18 + 2
             GPIO.output(servo_pin, GPIO.HIGH)
-            pwm.ChangeDutyCycle(duty)
+            
+            current_duty = 0
+            step = 0.5 
+            while current_duty < duty:
+                current_duty += step
+                pwm.ChangeDutyCycle(current_duty)
+                time.sleep(0.1) 
+            
             time.sleep(1)
             GPIO.output(servo_pin, GPIO.LOW)
             pwm.ChangeDutyCycle(0)
