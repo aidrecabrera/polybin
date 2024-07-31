@@ -24,7 +24,7 @@ class Polybin:
             "haz": False,
         }
         self.last_notification_time = time.time()
-        self.alert = alert_object()
+        self.alert = alert_object
 
     def update_sensor_data(self):
         sensor = Data()
