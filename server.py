@@ -33,7 +33,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 logger = AsyncLogger(url, key)
 dispose = Dispose(32, 35)
-polybin = Polybin("/dev/ttyUSB0", socketio, logger)
+alert = Alert()
+polybin = Polybin("/dev/ttyUSB0", socketio, logger, alert)
 
 
 def parse_arguments():
@@ -143,8 +144,6 @@ class DetectionState:
 
 
 detection_state = DetectionState(confirmation_time=2)
-alert = Alert()
-
 
 def get_second_monitor_position():
     try:

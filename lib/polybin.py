@@ -7,7 +7,7 @@ from lib.async_logger import AsyncLogger
 from flask_socketio import SocketIO
 
 class Polybin:
-    def __init__(self, port, socketio: SocketIO, logger: AsyncLogger):
+    def __init__(self, port, socketio: SocketIO, logger: AsyncLogger, alert_object: Alert):
         self.bin_system = Sms(port=port)
         self.socketio = socketio
         self.logger = logger
@@ -24,7 +24,7 @@ class Polybin:
             "haz": False,
         }
         self.last_notification_time = time.time()
-        self.alert = Alert()
+        self.alert = alert_object()
 
     def update_sensor_data(self):
         sensor = Data()
