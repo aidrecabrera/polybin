@@ -48,7 +48,6 @@ class RemoveAlert(AlertStrategy):
 
 class Alert:
     def __init__(self):
-        pygame.mixer.init()
         self.alerts = {
             "bio": os.path.join(os.path.dirname(__file__), "biodegradable.mp3"),
             "non": os.path.join(os.path.dirname(__file__), "non_biodegradable.mp3"),
@@ -68,7 +67,20 @@ class Alert:
         self.lock = threading.Lock()
         self.queue = Queue()
         self.currently_playing = threading.Event()
+        self._initialize_pygame_mixer()
         threading.Thread(target=self._process_queue, daemon=True).start()
+
+    def _initialize_pygame_mixer(self, retries=5, delay=2):
+        for attempt in range(retries):
+            try:
+                pygame.mixer.init()
+                return
+            except pygame.error as e:
+                print(f"Attempt {attempt + 1} to initialize pygame.mixer failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                else:
+                    raise
 
     def _play_sound(self, sound_file):
         pygame.mixer.music.load(sound_file)
