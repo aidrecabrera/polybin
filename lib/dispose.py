@@ -22,14 +22,7 @@ class Dispose:
             pwm.start(0)
             duty = angle / 18 + 2
             GPIO.output(servo_pin, GPIO.HIGH)
-            
-            current_duty = 0
-            step = 0.5 
-            while current_duty < duty:
-                current_duty += step
-                pwm.ChangeDutyCycle(current_duty)
-                time.sleep(0.1) 
-            
+            pwm.ChangeDutyCycle(duty)
             time.sleep(1)
             GPIO.output(servo_pin, GPIO.LOW)
             pwm.ChangeDutyCycle(0)
@@ -38,7 +31,7 @@ class Dispose:
     def dispose(self, servo1_angle, servo2_angle):
         self.set_servo_angle(self.SERVO_PIN_1, servo1_angle)
         self.set_servo_angle(self.SERVO_PIN_2, servo2_angle)
-        time.sleep(1.5)
+        time.sleep(1)
         self.set_servo_angle(self.SERVO_PIN_2, 90)
 
     def dispose_biodegradable(self):
