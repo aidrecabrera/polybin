@@ -80,13 +80,16 @@ class Alert:
                 if attempt < retries - 1:
                     time.sleep(delay)
                 else:
-                    raise
+                    print("Failed to initialize pygame.mixer after several attempts. Continuing without sound.")
 
     def _play_sound(self, sound_file):
-        pygame.mixer.music.load(sound_file)
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)
+        try:
+            pygame.mixer.music.load(sound_file)
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+        except pygame.error as e:
+            print(f"Failed to play sound {sound_file}: {e}")
 
     def _process_queue(self):
         while True:
