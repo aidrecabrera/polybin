@@ -16,8 +16,6 @@ class Dispose:
         self.last_action_time = time.time()
         self.servo_lock = threading.Lock()
 
-        self.reset_servos()
-
     def set_servo_angle(self, servo_pin, angle):
         with self.servo_lock:
             pwm = GPIO.PWM(servo_pin, 50)
@@ -33,9 +31,8 @@ class Dispose:
     def dispose(self, servo1_angle, servo2_angle):
         self.set_servo_angle(self.SERVO_PIN_1, servo1_angle)
         self.set_servo_angle(self.SERVO_PIN_2, servo2_angle)
-        time.sleep(1)
+        time.sleep(1.5)
         self.set_servo_angle(self.SERVO_PIN_2, 90)
-        self.reset_servos()
 
     def dispose_biodegradable(self):
         print("Performing action: Disposing Biodegradable")
@@ -61,11 +58,6 @@ class Dispose:
         else:
             print("Action prevented: Cooldown in effect")
             return False
-
-    def reset_servos(self):
-        # Reset both servos to their initial position (e.g., 90 degrees)
-        self.set_servo_angle(self.SERVO_PIN_1, 90)
-        self.set_servo_angle(self.SERVO_PIN_2, 90)
 
     def cleanup(self):
         GPIO.cleanup()
