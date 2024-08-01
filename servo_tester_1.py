@@ -46,6 +46,14 @@ def main():
         return
 
     try:
+        dispose_system.set_servo_angle(dispose_system.servo1, 90)
+        dispose_system.set_servo_angle(dispose_system.servo2, 90)
+    except Exception as e:
+        print(f"Error setting initial servo angles: {e}")
+        print("Please check your servo connections and try again.")
+        return
+
+    try:
         while True:
             action = input("Enter action (1: test servo 1, 2: test servo 2, 3: test both) or 'exit' to quit: ").strip().lower()
             
