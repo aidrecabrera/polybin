@@ -1,15 +1,24 @@
 from gpiozero import AngularServo
+from gpiozero.pins.pigpio import PiGPIOFactory
 from gpiozero import Device
 import time
 import threading
+import warnings
 
 class Dispose:
     def __init__(self, servo_pin_1, servo_pin_2, cooldown_period=2):
         self.COOLDOWN_PERIOD = cooldown_period
         
-        self.factory = Device.pin_factory
-        self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180, pin_factory=self.factory)
-        self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180, pin_factory=self.factory)
+        try:
+            self.factory = PiGPIOFactory()
+            print("Using PiGPIO factory for improved performance")
+        except OSError:
+            warnings.warn("Unable to use PiGPIO. Falling back to default factory. For better performance, run 'sudo pigpiod' before starting this script.")
+            self.factory = Device.pin_factory
+
+        self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000, pin_factory=self.factory)
+        self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000, pin_factory=self.factory)
+
         self.last_action_time = time.time()
         self.servo_lock = threading.Lock()
 
@@ -22,6 +31,9 @@ class Dispose:
                 print(f"Error setting servo angle: {e}")
 
     def dispose(self, servo1_angle, servo2_angle):
+        if not self.can_perform_action():
+            return
+
         try:
             self.set_servo_angle(self.servo1, servo1_angle)
             self.set_servo_angle(self.servo2, servo2_angle)
@@ -40,11 +52,11 @@ class Dispose:
 
     def dispose_recyclable(self):
         print("Performing action: Disposing Recyclable")
-        self.dispose(0, 180)
+        self.dispose(180, 0)
 
     def dispose_hazardous(self):
         print("Performing action: Disposing Dangerous/Hazardous Waste")
-        self.dispose(90, 180)
+        self.dispose(180, 180)
 
     def can_perform_action(self):
         current_time = time.time()
@@ -78,17 +90,17 @@ def main():
             if action == 'exit':
                 break
 
-            if dispose_system.can_perform_action():
-                if action == "1":
-                    dispose_system.dispose_biodegradable()
-                elif action == "2":
-                    dispose_system.dispose_non_biodegradable()
-                elif action == "3":
-                    dispose_system.dispose_recyclable()
-                elif action == "4":
-                    dispose_system.dispose_hazardous()
-                else:
-                    print("Invalid action. Please enter a valid action.")
+            if action == "1":
+                dispose_system.dispose_biodegradable()
+            elif action == "2":
+                dispose_system.dispose_non_biodegradable()
+            elif action == "3":
+                dispose_system.dispose_recyclable()
+            elif action == "4":
+                dispose_system.dispose_hazardous()
+            else:
+                print("Invalid action. Please enter a valid action.")
+            
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nProgram interrupted by user. Cleaning up...")
