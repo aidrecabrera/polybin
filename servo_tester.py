@@ -26,6 +26,7 @@ class Dispose:
         with self.servo_lock:
             try:
                 servo.angle = angle
+                print(f"Setting servo on pin {servo.pin} to angle {angle}")
                 time.sleep(0.5)  
             except Exception as e:
                 print(f"Error setting servo angle: {e}")
@@ -67,6 +68,25 @@ class Dispose:
             print("Action prevented: Cooldown in effect")
             return False
 
+    def test_servos(self):
+        print("Testing Servo 1")
+        self.set_servo_angle(self.servo1, 0)
+        time.sleep(1)
+        self.set_servo_angle(self.servo1, 90)
+        time.sleep(1)
+        self.set_servo_angle(self.servo1, 180)
+        time.sleep(1)
+        self.set_servo_angle(self.servo1, 90)
+        
+        print("Testing Servo 2")
+        self.set_servo_angle(self.servo2, 0)
+        time.sleep(1)
+        self.set_servo_angle(self.servo2, 90)
+        time.sleep(1)
+        self.set_servo_angle(self.servo2, 180)
+        time.sleep(1)
+        self.set_servo_angle(self.servo2, 90)
+
     def cleanup(self):
         self.servo1.close()
         self.servo2.close()
@@ -84,8 +104,12 @@ def main():
         return
 
     try:
+        print("Testing servos...")
+        dispose_system.test_servos()
+        print("Servo test complete. Did both servos move?")
+
         while True:
-            action = input("Enter action (1: biodegradable, 2: non_biodegradable, 3: recyclable, 4: hazardous) or 'exit' to quit: ").strip().lower()
+            action = input("Enter action (1: biodegradable, 2: non_biodegradable, 3: recyclable, 4: hazardous, 5: test servos) or 'exit' to quit: ").strip().lower()
             
             if action == 'exit':
                 break
@@ -98,6 +122,8 @@ def main():
                 dispose_system.dispose_recyclable()
             elif action == "4":
                 dispose_system.dispose_hazardous()
+            elif action == "5":
+                dispose_system.test_servos()
             else:
                 print("Invalid action. Please enter a valid action.")
             
