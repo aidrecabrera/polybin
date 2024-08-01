@@ -1,12 +1,20 @@
+import warnings
 from gpiozero import AngularServo
 from gpiozero.pins.pigpio import PiGPIOFactory
+from gpiozero import Device
 import time
 import threading
 
 class Dispose:
     def __init__(self, servo_pin_1, servo_pin_2, cooldown_period=2):
         self.COOLDOWN_PERIOD = cooldown_period
-        self.factory = PiGPIOFactory()
+        
+        try:
+            self.factory = PiGPIOFactory()
+            print("Using PiGPIO factory for improved performance")
+        except OSError:
+            warnings.warn("Unable to use PiGPIO. Falling back to default factory. For better performance, run 'sudo pigpiod' before starting this script.")
+            self.factory = Device.pin_factory
 
         self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180, pin_factory=self.factory)
         self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180, pin_factory=self.factory)
@@ -18,7 +26,7 @@ class Dispose:
         with self.servo_lock:
             try:
                 servo.angle = angle
-                time.sleep(0.5)  # Allow time for servo to reach position
+                time.sleep(0.5)  
             except Exception as e:
                 print(f"Error setting servo angle: {e}")
 
@@ -27,7 +35,7 @@ class Dispose:
             self.set_servo_angle(self.servo1, servo1_angle)
             self.set_servo_angle(self.servo2, servo2_angle)
             time.sleep(1)
-            self.set_servo_angle(self.servo2, 90)  # Return to neutral position
+            self.set_servo_angle(self.servo2, 90) 
         except Exception as e:
             print(f"Error during dispose action: {e}")
 
