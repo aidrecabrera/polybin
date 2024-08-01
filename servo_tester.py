@@ -1,39 +1,35 @@
-import RPi.GPIO as GPIO
+from gpiozero import AngularServo
+from gpiozero.pins.pigpio import PiGPIOFactory
 import time
 import threading
 
 class Dispose:
     def __init__(self, servo_pin_1, servo_pin_2, cooldown_period=2):
-        self.SERVO_PIN_1 = servo_pin_1
-        self.SERVO_PIN_2 = servo_pin_2
         self.COOLDOWN_PERIOD = cooldown_period
+        self.factory = PiGPIOFactory() 
 
-        GPIO.cleanup()
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setwarnings(False)
-        GPIO.setup(self.SERVO_PIN_1, GPIO.OUT)
-        GPIO.setup(self.SERVO_PIN_2, GPIO.OUT)
+        self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180, pin_factory=self.factory)
+        self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180, pin_factory=self.factory)
 
         self.last_action_time = time.time()
         self.servo_lock = threading.Lock()
 
-    def set_servo_angle(self, servo_pin, angle):
+    def set_servo_angle(self, servo, angle):
         with self.servo_lock:
-            pwm = GPIO.PWM(servo_pin, 50)
-            pwm.start(0)
-            duty = angle / 18 + 2
-            GPIO.output(servo_pin, GPIO.HIGH)
-            pwm.ChangeDutyCycle(duty)
-            time.sleep(1)
-            GPIO.output(servo_pin, GPIO.LOW)
-            pwm.ChangeDutyCycle(0)
-            pwm.stop()
+            try:
+                servo.angle = angle
+                time.sleep(0.5)  
+            except Exception as e:
+                print(f"Error setting servo angle: {e}")
 
     def dispose(self, servo1_angle, servo2_angle):
-        self.set_servo_angle(self.SERVO_PIN_1, servo1_angle)
-        self.set_servo_angle(self.SERVO_PIN_2, servo2_angle)
-        time.sleep(1)
-        self.set_servo_angle(self.SERVO_PIN_2, 90)
+        try:
+            self.set_servo_angle(self.servo1, servo1_angle)
+            self.set_servo_angle(self.servo2, servo2_angle)
+            time.sleep(1)
+            self.set_servo_angle(self.servo2, 90) 
+        except Exception as e:
+            print(f"Error during dispose action: {e}")
 
     def dispose_biodegradable(self):
         print("Performing action: Disposing Biodegradable")
@@ -61,11 +57,12 @@ class Dispose:
             return False
 
     def cleanup(self):
-        GPIO.cleanup()
+        self.servo1.close()
+        self.servo2.close()
 
 def main():
-    servo_pin_1 = 32
-    servo_pin_2 = 35
+    servo_pin_1 = 32  
+    servo_pin_2 = 35  
     cooldown_period = 2
 
     dispose_system = Dispose(servo_pin_1, servo_pin_2, cooldown_period)
@@ -89,6 +86,8 @@ def main():
                 else:
                     print("Invalid action. Please enter a valid action.")
             time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user. Cleaning up...")
     finally:
         dispose_system.cleanup()
 
