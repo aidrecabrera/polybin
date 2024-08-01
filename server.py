@@ -32,7 +32,7 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 logger = AsyncLogger(url, key)
-dispose = Dispose(12, 19)
+dispose = Dispose(32, 35)
 alert = Alert()
 polybin = Polybin("/dev/ttyUSB0", socketio, logger, alert)
 
