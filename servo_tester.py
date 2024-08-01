@@ -59,8 +59,8 @@ class Dispose:
         self.servo2.close()
 
 def main():
-    servo_pin_1 = 32  
-    servo_pin_2 = 35  
+    servo_pin_1 = 12  
+    servo_pin_2 = 19  
     cooldown_period = 2
 
     dispose_system = Dispose(servo_pin_1, servo_pin_2, cooldown_period)
