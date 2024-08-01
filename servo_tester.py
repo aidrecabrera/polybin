@@ -1,15 +1,13 @@
 from gpiozero import AngularServo
-from gpiozero.pins.pigpio import PiGPIOFactory
 import time
 import threading
 
 class Dispose:
     def __init__(self, servo_pin_1, servo_pin_2, cooldown_period=2):
         self.COOLDOWN_PERIOD = cooldown_period
-        self.factory = PiGPIOFactory() 
 
-        self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180, pin_factory=self.factory)
-        self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180, pin_factory=self.factory)
+        self.servo1 = AngularServo(servo_pin_1, min_angle=0, max_angle=180)
+        self.servo2 = AngularServo(servo_pin_2, min_angle=0, max_angle=180)
 
         self.last_action_time = time.time()
         self.servo_lock = threading.Lock()
@@ -18,7 +16,7 @@ class Dispose:
         with self.servo_lock:
             try:
                 servo.angle = angle
-                time.sleep(0.5)  
+                time.sleep(0.5)
             except Exception as e:
                 print(f"Error setting servo angle: {e}")
 
@@ -27,7 +25,7 @@ class Dispose:
             self.set_servo_angle(self.servo1, servo1_angle)
             self.set_servo_angle(self.servo2, servo2_angle)
             time.sleep(1)
-            self.set_servo_angle(self.servo2, 90) 
+            self.set_servo_angle(self.servo2, 90)
         except Exception as e:
             print(f"Error during dispose action: {e}")
 
