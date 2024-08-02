@@ -75,7 +75,7 @@ class Alert:
         for attempt in range(retries):
             try:
                 pygame.mixer.init()
-                print("Pygame mixer initialized successfully.")
+                print(f"Pygame mixer initialized successfully on attempt {attempt + 1}.")
                 return
             except pygame.error as e:
                 print(f"Attempt {attempt + 1} to initialize pygame.mixer failed: {e}")
@@ -85,6 +85,8 @@ class Alert:
                 else:
                     print("Failed to initialize pygame.mixer after several attempts.")
                     print("Sounds will not be played. Please check your audio setup.")
+                    print(f"Pygame version: {pygame.version.ver}")
+                    print(f"SDL version: {pygame.version.SDL}")
 
     def _play_sound(self, sound_file):
         if not pygame.mixer.get_init():
