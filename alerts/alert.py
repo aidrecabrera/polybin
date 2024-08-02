@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import threading
 import time
@@ -139,3 +140,29 @@ class Alert:
 
     def play_remove(self, alert_type):
         self._queue_alert(RemoveAlert(alert_type))
+        
+def main():
+    alert_system = Alert()
+    alert_types = ["bio", "non", "rec", "haz"]
+
+    print("Starting alert system test loop. Press Ctrl+C to exit.")
+    try:
+        while True:
+            if random.choice([True, False]):
+                alert_type = random.choice(alert_types)
+                print(f"Triggering standard alert: {alert_type}")
+                alert_system.play_alert(alert_type)
+            else:
+                alert_type = random.choice(alert_types)
+                print(f"Triggering remove alert: {alert_type}")
+                alert_system.play_remove(alert_type)
+            
+            wait_time = random.uniform(5, 15)
+            print(f"Waiting for {wait_time:.2f} seconds before next alert...")
+            time.sleep(wait_time)
+
+    except KeyboardInterrupt:
+        print("\nTest loop interrupted. Exiting...")
+
+if __name__ == "__main__":
+    main()
