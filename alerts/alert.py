@@ -1,54 +1,22 @@
 import os
-import random
-import sys
 import threading
 import time
 from queue import Queue
-from abc import ABC, abstractmethod
 import pygame
-from enum import Enum, auto
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-class AlertCategory(Enum):
-    REMOVE = auto()
-    OTHER = auto()
-
-class AlertStrategy(ABC):
-    @abstractmethod
-    def play(self, alert_system):
-        pass
-
-    @abstractmethod
-    def get_category(self):
-        pass
-
-class StandardAlert(AlertStrategy):
-    def __init__(self, alert_type):
-        self.alert_type = alert_type
-
-    def play(self, alert_system):
-        alert_system._play_sound(alert_system.alerts[self.alert_type])
-        alert_system._play_sound(alert_system.alerts["please_empty"])
-
-    def get_category(self):
-        return AlertCategory.OTHER
-
-class RemoveAlert(AlertStrategy):
-    def __init__(self, alert_type):
-        self.alert_type = alert_type
-
-    def play(self, alert_system):
-        alert_system._play_sound(alert_system.alerts[self.alert_type])
-        alert_system._play_sound(alert_system.alerts["remove"])
-        time.sleep(2)
-        alert_system._play_sound(alert_system.alerts["remove"])
-
-    def get_category(self):
-        return AlertCategory.REMOVE
 
 class Alert:
-    def __init__(self):
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(Alert, cls).__new__(cls)
+                    cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
         self.alerts = {
             "bio": os.path.join(os.path.dirname(__file__), "biodegradable.mp3"),
             "non": os.path.join(os.path.dirname(__file__), "non_biodegradable.mp3"),
@@ -57,17 +25,7 @@ class Alert:
             "please_empty": os.path.join(os.path.dirname(__file__), "please_empty.mp3"),
             "remove": os.path.join(os.path.dirname(__file__), "remove.mp3"),
         }
-        self.last_play_time = {
-            AlertCategory.REMOVE: 0,
-            AlertCategory.OTHER: 0
-        }
-        self.cooldown_time = {
-            AlertCategory.REMOVE: 30,
-            AlertCategory.OTHER: 300    
-        }
-        self.lock = threading.Lock()
         self.queue = Queue()
-        self.currently_playing = threading.Event()
         self._initialize_pygame_mixer()
         threading.Thread(target=self._process_queue, daemon=True).start()
 
@@ -86,11 +44,13 @@ class Alert:
                     print("Failed to initialize pygame.mixer after several attempts.")
                     print("Sounds will not be played. Please check your audio setup.")
 
-    def _play_sound(self, sound_file):
-        if not pygame.mixer.get_init():
-            print("Pygame mixer is not initialized. Attempting to initialize...")
-            self._initialize_pygame_mixer()
+    def _process_queue(self):
+        while True:
+            alert_type = self.queue.get()
+            self._play_sound(self.alerts[alert_type])
+            self.queue.task_done()
 
+    def _play_sound(self, sound_file):
         if pygame.mixer.get_init():
             try:
                 pygame.mixer.music.load(sound_file)
@@ -102,67 +62,15 @@ class Alert:
         else:
             print(f"Cannot play sound {sound_file}: Pygame mixer is not initialized.")
 
-    def _process_queue(self):
-        while True:
-            alert_strategy = self.queue.get()
-            self._play_alert(alert_strategy)
-            self.queue.task_done()
-
-    def _play_alert(self, alert_strategy):
-        with self.lock:
-            current_time = time.time()
-            category = alert_strategy.get_category()
-
-            if self.currently_playing.is_set():
-                print(f"Alert already playing. Skipping {alert_strategy.alert_type}.")
-                return
-
-            time_since_last_play = current_time - self.last_play_time[category]
-            if time_since_last_play < self.cooldown_time[category]:
-                print(f"Cooldown active for {category.name}. Skipping {alert_strategy.alert_type}.")
-                return
-
-            print(f"Playing alert sound: {alert_strategy.alert_type} (Category: {category.name})")
-            self.currently_playing.set()
-            alert_strategy.play(self)
-            self.currently_playing.clear()
-
-            self.last_play_time[category] = current_time
-
-    def _queue_alert(self, alert_strategy):
-        if alert_strategy.alert_type in self.alerts:
-            self.queue.put(alert_strategy)
-        else:
-            print(f"Alert type '{alert_strategy.alert_type}' not recognized.")
-
     def play_alert(self, alert_type):
-        self._queue_alert(StandardAlert(alert_type))
+        if alert_type in self.alerts:
+            self.queue.put(alert_type)
+        else:
+            print(f"Alert type '{alert_type}' not recognized.")
 
     def play_remove(self, alert_type):
-        self._queue_alert(RemoveAlert(alert_type))
-        
-def main():
-    alert_system = Alert()
-    alert_types = ["bio", "non", "rec", "haz"]
-
-    print("Starting alert system test loop. Press Ctrl+C to exit.")
-    try:
-        while True:
-            if random.choice([True, False]):
-                alert_type = random.choice(alert_types)
-                print(f"Triggering standard alert: {alert_type}")
-                alert_system.play_alert(alert_type)
-            else:
-                alert_type = random.choice(alert_types)
-                print(f"Triggering remove alert: {alert_type}")
-                alert_system.play_remove(alert_type)
-            
-            wait_time = random.uniform(5, 15)
-            print(f"Waiting for {wait_time:.2f} seconds before next alert...")
-            time.sleep(wait_time)
-
-    except KeyboardInterrupt:
-        print("\nTest loop interrupted. Exiting...")
-
-if __name__ == "__main__":
-    main()
+        if alert_type in self.alerts:
+            self.queue.put(alert_type)
+            self.queue.put("remove")
+        else:
+            print(f"Alert type '{alert_type}' not recognized.")
